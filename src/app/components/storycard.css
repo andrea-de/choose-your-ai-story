@@ -1,0 +1,28 @@
+@tailwind components;
+
+@layer components {
+
+    .storycard > * {
+        @apply m-1
+    }
+
+    .review-icon {
+        @apply m-1
+    }
+
+}
+
+/* Mobile */
+@media (max-width: 800px) {
+    .review-icon {
+        font-size: 15px;
+    }
+}
+
+/* Wide screen */
+@media (min-width: 800px) {
+    .review-icon {
+        font-size: 25px;
+    }
+
+}

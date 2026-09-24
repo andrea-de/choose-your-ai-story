@@ -1,0 +1,17 @@
+@tailwind components;
+
+@layer components {
+
+    /* Mobile */
+    @media (max-width: 800px) {
+        span {
+            @apply text-base mx-5
+        }
+
+    }
+
+    /* Wide screen */
+    @media (min-width: 800px) {
+
+    }
+}
