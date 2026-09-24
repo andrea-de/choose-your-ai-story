@@ -9,6 +9,8 @@ vi.mock('next/server', async (importOriginal) => ({
 process.env.AI_PROVIDER = 'mock'
 process.env.STORY_STORE = 'memory'
 process.env.MOCK_AI_DELAY_MS = '0'
+// Exercise the paid image path here; the default library mode needs no route.
+process.env.SKETCHES = 'generate'
 
 const stories = await import('@/app/api/stories/route')
 const pages = await import('@/app/api/stories/[id]/pages/[page]/route')

@@ -1,3 +1,6 @@
+import { readFile } from 'node:fs/promises'
+import path from 'node:path'
+import { sketchIds, type SketchId } from '../sketches'
 import type { Theme } from '../themes'
 import type { PageDraft } from '../story/schema'
 import type { PageRequest } from '../story/prompts'
@@ -40,22 +43,24 @@ export class MockStoryTeller implements StoryTeller {
     const [d1, d2, d3] = shuffled(book.details, rng)
     const paragraphs = [`${opening} ${d1}`, `${d2} ${d3}`, req.mustEnd ? pick(book.endings, rng) : pick(book.hooks, rng)]
     const choices = req.mustEnd ? [] : shuffled(book.choices, rng).slice(0, req.choicesCount)
-    const item = pick(book.items, rng)
+    const sketch = pick(book.items, rng)
     return {
       text: paragraphs.join('\n\n'),
       choices,
-      newFacts: req.mustEnd ? [] : [`You carry ${item}.`],
+      newFacts: req.mustEnd ? [] : [`The ${sketch} will matter later.`],
       retiredFactIds: req.facts.length > 2 ? [req.facts[0].id] : [],
       endingTitle: req.mustEnd ? pick(book.endingTitles, rng) : '',
-      illustrationPrompt: item,
+      sketch,
+      illustrationPrompt: `a ${sketch}`,
     }
   }
 
+  /** Stands in for an image model by returning the closest library sketch. */
   async drawIllustration(subject: string, _theme: Theme): Promise<Illustration> {
     await this.wait()
-    const key = Object.keys(SKETCHES).find((k) => subject.includes(k))
-    const svg = key ? SKETCHES[key] : Object.values(SKETCHES)[hashString(subject) % Object.keys(SKETCHES).length]
-    return { mimeType: 'image/svg+xml', data: new TextEncoder().encode(svg) }
+    const id = sketchIds.find((k) => subject.includes(k)) ?? sketchIds[hashString(subject) % sketchIds.length]
+    const data = await readFile(path.join(process.cwd(), 'public', 'sketches', `${id}.svg`))
+    return { mimeType: 'image/svg+xml', data: new Uint8Array(data) }
   }
 
   private wait() {
@@ -89,8 +94,8 @@ interface Phrasebook {
   endings: string[]
   endingTitles: string[]
   choices: string[]
-  /** Each names one of the SKETCHES keys, so the mock always has a drawing. */
-  items: string[]
+  /** Sketch library ids this theme's pages draw from. */
+  items: SketchId[]
 }
 
 export const PHRASEBOOKS: Record<ThemeId, Phrasebook> = {
@@ -137,7 +142,7 @@ export const PHRASEBOOKS: Record<ThemeId, Phrasebook> = {
       'Ask the crow what it knows',
       'Return to the village for help',
     ],
-    items: ['a lantern', 'a key', 'a candle', 'a tower', 'a feather', 'a tree'],
+    items: ['lantern', 'key', 'door', 'tree', 'scroll', 'stranger'],
   },
   future: {
     titleNouns: ['Silent Signal', 'Last Orbit', 'Glass Moon', 'Ninth Relay', 'Cold Harbor', 'Long Drift'],
@@ -182,7 +187,7 @@ export const PHRASEBOOKS: Record<ThemeId, Phrasebook> = {
       'Follow the drone into the service ducts',
       'Plot a course toward the coordinates',
     ],
-    items: ['a planet', 'a rocket', 'a key', 'a tower', 'a lantern'],
+    items: ['planet', 'door', 'key', 'stranger', 'moon'],
   },
   noir: {
     titleNouns: ['Long Goodbye', 'Blue Gardenia', 'Last Call', 'Paper Alibi', 'Glass Key', 'Midnight Ledger'],
@@ -227,7 +232,7 @@ export const PHRASEBOOKS: Record<ThemeId, Phrasebook> = {
       'Search her apartment while she sleeps',
       'Take the envelope and walk away',
     ],
-    items: ['a fedora', 'a streetlamp', 'a key', 'a candle', 'a telephone'],
+    items: ['stranger', 'key', 'door', 'lantern', 'scroll'],
   },
   pirate: {
     titleNouns: ['Black Compass', 'Drowned Crown', 'Ninth Wave', 'Salt Queen', 'Lost Doubloon', 'Siren’s Map'],
@@ -272,7 +277,7 @@ export const PHRASEBOOKS: Record<ThemeId, Phrasebook> = {
       'Climb to the crow’s nest for a better look',
       'Trust the parrot and head for the reef',
     ],
-    items: ['a ship', 'an anchor', 'a compass', 'a key', 'a lantern'],
+    items: ['ship', 'lighthouse', 'scroll', 'key', 'lantern'],
   },
   ancient: {
     titleNouns: ['Silent Oracle', 'Bronze Bull', 'Ninth Labor', 'Golden Thread', 'Owl’s Bargain', 'Last Nymph'],
@@ -317,7 +322,7 @@ export const PHRASEBOOKS: Record<ThemeId, Phrasebook> = {
       'Challenge the stranger to a riddle',
       'Descend into the labyrinth',
     ],
-    items: ['an amphora', 'an owl', 'a lyre', 'a helmet', 'a ship'],
+    items: ['ship', 'scroll', 'tree', 'moon', 'stranger'],
   },
   dream: {
     titleNouns: ['Glass Tide', 'Other Room', 'Upside Moon', 'Paper Sky', 'Second Shadow', 'Slow Clock'],
@@ -362,105 +367,6 @@ export const PHRASEBOOKS: Record<ThemeId, Phrasebook> = {
       'Ask the moon what time it is',
       'Close your eyes inside the dream',
     ],
-    items: ['a door', 'a moon', 'a mirror', 'a staircase', 'a feather'],
+    items: ['moon', 'door', 'key', 'tree', 'stranger'],
   },
-}
-
-const stroke = 'fill="none" stroke="#1b1206" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"'
-const svg = (body: string) =>
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><g ${stroke}>${body}</g></svg>`
-
-export const SKETCHES: Record<string, string> = {
-  lantern: svg(
-    '<path d="M100 22c0-8 10-10 12-4"/><path d="M78 56 100 34l22 22z"/><path d="M82 56v62h36V56"/>' +
-      '<path d="M100 58v58M82 86h36"/><path d="M100 106c-9-9-5-20 0-28 5 8 9 19 0 28z"/><path d="M74 118h52M84 126h32"/>',
-  ),
-  key: svg(
-    '<circle cx="62" cy="100" r="22"/><circle cx="62" cy="100" r="9"/><path d="M84 100h86"/>' +
-      '<path d="M150 100v18M162 100v12M138 100v10"/>',
-  ),
-  candle: svg(
-    '<path d="M86 80v76h28V80z"/><path d="M86 84c6 5 10-2 14 4 4-6 10 2 14-4"/><path d="M100 80v-8"/>' +
-      '<path d="M100 70c-10-10-4-24 0-34 4 10 10 24 0 34z"/><path d="M62 158h76c-6 10-70 10-76 0z"/>',
-  ),
-  tower: svg(
-    '<path d="M72 170V70h56v100"/><path d="M68 70V52h12v10h10V52h12v10h10V52h12v18"/>' +
-      '<path d="M92 170v-26c0-12 16-12 16 0v26"/><path d="M96 96v-8c0-6 8-6 8 0v8z"/><path d="M40 170h120"/>',
-  ),
-  feather: svg(
-    '<path d="M60 160C80 110 110 60 150 40c-4 40-30 90-80 110"/><path d="M60 160l84-112"/>' +
-      '<path d="M84 128l-6-18M100 108l-4-20M116 86l-2-18M92 120l20 2M108 98l20 0"/>',
-  ),
-  tree: svg(
-    '<path d="M100 170v-70M100 120l-26-26M100 110l30-30M74 94l-14-4M74 94v-18M130 80l14-10M130 80v-16"/>' +
-      '<path d="M100 100 88 74M100 100l6-34"/><path d="M60 172c20-6 60-6 80 0"/>',
-  ),
-  planet: svg(
-    '<circle cx="100" cy="100" r="38"/><path d="M40 118c-18 12-10 24 20 20 30-4 76-22 100-44 22-20 10-30-18-22"/>' +
-      '<path d="M76 82c14-6 34-6 48 2M70 104c18 6 40 6 58-2"/><circle cx="40" cy="44" r="2"/><circle cx="164" cy="150" r="2"/>' +
-      '<circle cx="156" cy="40" r="3"/>',
-  ),
-  rocket: svg(
-    '<path d="M100 26c22 18 28 50 22 92H78c-6-42 0-74 22-92z"/><circle cx="100" cy="72" r="10"/>' +
-      '<path d="M78 104l-20 26 22-4M122 104l20 26-22-4"/><path d="M88 118l-4 22M100 118v28M112 118l4 22"/>',
-  ),
-  fedora: svg(
-    '<path d="M30 124c30 16 110 16 140 0-8-6-20-8-30-8"/><path d="M60 116c0-28 6-50 18-54 8-2 14 8 22 8s14-10 22-8c12 4 18 26 18 54"/>' +
-      '<path d="M60 108c26 8 54 8 80 0"/><path d="M84 66c6 6 26 6 32 0"/>',
-  ),
-  streetlamp: svg(
-    '<path d="M100 176V70"/><path d="M84 176h32"/><path d="M100 70c0-20 30-22 40-8"/>' +
-      '<path d="M128 62h24l-6 16h-12z"/><path d="M140 82l-6 18M146 82l8 16M136 82l-14 12"/>',
-  ),
-  telephone: svg(
-    '<path d="M60 130h80l10 34H50z"/><path d="M76 130v-16h48v16"/><circle cx="100" cy="146" r="10"/>' +
-      '<path d="M54 104c-8-24 20-40 46-40s54 16 46 40l-20 2c-2-10-12-16-26-16s-24 6-26 16z"/>',
-  ),
-  ship: svg(
-    '<path d="M40 130h120l-18 26H58z"/><path d="M100 130V40M70 130V60"/><path d="M100 44c26 10 30 50 0 70"/>' +
-      '<path d="M100 44c-20 12-22 50 0 70M70 64c16 8 18 36 0 50M70 64c-12 10-12 36 0 50"/><path d="M100 40l18 6-18 6"/>' +
-      '<path d="M30 170c14-8 26 8 40 0s26 8 40 0 26 8 40 0 26 8 30 2"/>',
-  ),
-  anchor: svg(
-    '<circle cx="100" cy="42" r="12"/><path d="M100 54v112"/><path d="M76 78h48"/>' +
-      '<path d="M46 124c4 30 30 44 54 42 24 2 50-12 54-42"/><path d="M46 124l-8 10M46 124l12 4M154 124l8 10M154 124l-12 4"/>',
-  ),
-  amphora: svg(
-    '<path d="M84 40h32M88 40v14c-30 12-40 46-26 78 8 18 20 30 38 34 18-4 30-16 38-34 14-32 4-66-26-78V40"/>' +
-      '<path d="M88 58c-18-6-26 6-22 22M112 58c18-6 26 6 22 22"/><path d="M70 104h60M74 120h52"/>' +
-      '<path d="M86 104l6 16M100 104v16M114 104l-6 16"/><path d="M90 166l-4 10h28l-4-10"/>',
-  ),
-  owl: svg(
-    '<path d="M70 70c0-20 60-20 60 0v56c0 26-60 26-60 0z"/><path d="M70 64l-6-16 18 10M130 64l6-16-18 10"/>' +
-      '<circle cx="86" cy="80" r="11"/><circle cx="114" cy="80" r="11"/><circle cx="86" cy="80" r="3"/><circle cx="114" cy="80" r="3"/>' +
-      '<path d="M100 88l-5 8h10z"/><path d="M84 112l6 6 6-6 6 6 6-6 6 6"/><path d="M60 150h80M86 150v-10M114 150v-10"/>',
-  ),
-  lyre: svg(
-    '<path d="M70 160c-26-30-16-80 8-104M130 160c26-30 16-80-8-104"/><path d="M78 56c-4-10 2-18 10-16M122 56c4-10-2-18-10-16"/>' +
-      '<path d="M76 74h48"/><path d="M68 160h64"/><path d="M88 74v86M100 74v86M112 74v86"/>',
-  ),
-  helmet: svg(
-    '<path d="M60 150V96c0-36 80-36 80 0v54"/><path d="M60 150h24v-34h-10v-14h52v14h-10v34h24"/><path d="M100 102v40"/>' +
-      '<path d="M60 70c20-40 60-40 80 0"/><path d="M58 70c14-24 70-24 84 0" stroke-dasharray="3 6"/>',
-  ),
-  door: svg(
-    '<path d="M76 150V56h48v94"/><path d="M76 56l20-8v110l-20-8"/><circle cx="90" cy="104" r="2.5"/>' +
-      '<path d="M100 60h20M104 150c10 6 30 10 44 8M52 168c16-6 34-8 48-6"/><path d="M40 60c8-4 14 0 18 4M150 40c6-2 12 2 12 6"/>',
-  ),
-  moon: svg(
-    '<path d="M122 40a62 62 0 1 0 0 120 48 48 0 1 1 0-120z"/><path d="M150 56l3 8 8 3-8 3-3 8-3-8-8-3 8-3z"/>' +
-      '<path d="M160 120l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/><path d="M100 170v14M94 182c4 4 8 4 12 0"/>',
-  ),
-  mirror: svg(
-    '<ellipse cx="100" cy="92" rx="38" ry="54"/><ellipse cx="100" cy="92" rx="30" ry="46"/><path d="M100 146v24M78 176h44"/>' +
-      '<path d="M90 70c6-8 14-10 20-6M86 100c2 10 8 18 16 20" stroke-dasharray="4 6"/>',
-  ),
-  staircase: svg(
-    '<path d="M40 150h24v-20h24v-20h24V90h24V70h24"/><path d="M40 150l20-12h24v-20h24V98h24V78h24l-20-8"/>' +
-      '<path d="M160 70v-20h-24M40 150v20"/><circle cx="150" cy="40" r="3"/>',
-  ),
-  compass: svg(
-    '<circle cx="100" cy="100" r="60"/><circle cx="100" cy="100" r="50"/><path d="M100 36l10 54 54 10-54 10-10 54-10-54-54-10 54-10z"/>' +
-      '<path d="M100 36v128M36 100h128"/><circle cx="100" cy="100" r="5"/>',
-  ),
 }

@@ -21,7 +21,7 @@ const page = (extra: Partial<PageView> = {}): PageView => ({
     { text: 'Climb the tower stair', page: 43, explored: false },
     { text: 'Hide and watch', page: 12, explored: true },
   ],
-  hasIllustration: false,
+  sketchUrl: undefined,
   visits: 1,
   ...extra,
 })

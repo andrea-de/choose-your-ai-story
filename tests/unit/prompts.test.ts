@@ -68,6 +68,13 @@ describe('pagePrompt', () => {
     expect(prompt).not.toContain('exactly 2 choices')
   })
 
+  it('lists the sketch library and discourages repeating the last sketch', () => {
+    const prompt = pagePrompt({ ...base, previousSketch: 'lantern' })
+    expect(prompt).toContain('- lighthouse: a lighthouse on rocks')
+    expect(prompt).toContain('The previous page showed "lantern"')
+    expect(pagePrompt(base)).not.toContain('The previous page showed')
+  })
+
   it('raises the stakes near the end', () => {
     expect(pagePrompt({ ...base, depth: 6 })).toContain('nearing its end')
     expect(pagePrompt({ ...base, depth: 2 })).not.toContain('nearing its end')
@@ -91,6 +98,7 @@ describe('schemas', () => {
       newFacts: ['You are soaked.'],
       retiredFactIds: [],
       endingTitle: '',
+      sketch: 'door',
       illustrationPrompt: 'a fogbound gate',
     })
     expect(draft.choices).toHaveLength(2)
@@ -103,6 +111,7 @@ describe('schemas', () => {
       newFacts: [],
       retiredFactIds: [],
       endingTitle: '',
+      sketch: 'none',
       illustrationPrompt: 'y',
     }
     expect(() => pageDraftSchema.parse({ ...good, text: '  ' })).toThrow()
@@ -120,7 +129,7 @@ describe('schemas', () => {
     expect(schema.type).toBe('object')
     expect(schema).not.toHaveProperty('$schema')
     expect(schema.required).toEqual(
-      expect.arrayContaining(['text', 'choices', 'newFacts', 'retiredFactIds', 'illustrationPrompt']),
+      expect.arrayContaining(['text', 'choices', 'newFacts', 'retiredFactIds', 'sketch', 'illustrationPrompt']),
     )
   })
 

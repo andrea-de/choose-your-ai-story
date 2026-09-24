@@ -1,5 +1,6 @@
 import type { Illustration, StoryTeller } from '../ai/types'
 import type { StoryStore } from '../store/types'
+import { isSketchId, sketchUrl } from '../sketches'
 import { getTheme } from '../themes'
 import type { PageDraft, NewStoryRequest } from './schema'
 import { pick } from './random'
@@ -19,9 +20,15 @@ export interface StoryServiceOptions {
   /** How long to wait for another request that is writing the same page. */
   waitTimeoutMs?: number
   pollMs?: number
-  /** Draw a sketch for each page. Off saves the image-model cost (and suits keys without billing). */
-  sketches?: boolean
+  /**
+   * How pages get their sketch: "library" (default) has the model pick from the
+   * hand-drawn set at no cost; "generate" asks the image model for a new drawing
+   * (paid per image); "off" shows none.
+   */
+  sketches?: SketchMode
 }
+
+export type SketchMode = 'library' | 'generate' | 'off'
 
 const DEFAULTS = {
   pageCount: 400,
@@ -37,7 +44,7 @@ export class StoryService {
   private readonly staleAfterMs: number
   private readonly waitTimeoutMs: number
   private readonly pollMs: number
-  private readonly sketches: boolean
+  private readonly sketches: SketchMode
   /** In-process single flight: one generation per page per server. */
   private readonly inflight = new Map<string, Promise<PageNode>>()
   private readonly drawing = new Map<string, Promise<Illustration>>()
@@ -53,7 +60,7 @@ export class StoryService {
     this.staleAfterMs = options.staleAfterMs ?? 120_000
     this.waitTimeoutMs = options.waitTimeoutMs ?? 90_000
     this.pollMs = options.pollMs ?? 400
-    this.sketches = options.sketches ?? true
+    this.sketches = options.sketches ?? 'library'
   }
 
   get tellerName() {
@@ -202,6 +209,7 @@ export class StoryService {
         choicesCount: story.choicesPerPage,
         depth: page.depth,
         maxDepth: story.maxDepth,
+        previousSketch: earlier.at(-1)?.sketch,
       }
       const draft = await this.draftWithRetry(() => this.teller.writePage(request), mustEnd, story.choicesPerPage)
 
@@ -222,6 +230,7 @@ export class StoryService {
         factsRetired: draft.retiredFactIds.filter((id) => knownFacts.has(id)),
         isEnding: mustEnd,
         endingTitle: mustEnd ? tidyLine(draft.endingTitle) || 'The End' : undefined,
+        sketch: isSketchId(draft.sketch) ? draft.sketch : undefined,
         illustrationPrompt: draft.illustrationPrompt,
       }
       const children: PageNode[] = (written.choices ?? []).map((choice) => ({
@@ -262,12 +271,11 @@ export class StoryService {
 
   /** A page as the reader sees it, including which choices others have taken. */
   async viewPage(storyId: string, page: PageNode): Promise<PageView> {
-    const view = toPageView(page, await this.store.getPages(storyId))
-    return this.sketches ? view : { ...view, hasIllustration: false }
+    return toPageView(page, await this.store.getPages(storyId), this.sketches)
   }
 
   async getIllustration(storyId: string, number: number): Promise<Illustration> {
-    if (!this.sketches) throw new PageNotFoundError('Sketches are turned off')
+    if (this.sketches !== 'generate') throw new PageNotFoundError('Sketches are not generated in this mode')
     const cached = await this.store.getIllustration(storyId, number)
     if (cached) return cached
     const key = `${storyId}:${number}`
@@ -291,7 +299,11 @@ export class StoryService {
   }
 }
 
-export function toPageView(page: PageNode, pages: ReadonlyMap<number, PageNode> = new Map()): PageView {
+export function toPageView(
+  page: PageNode,
+  pages: ReadonlyMap<number, PageNode> = new Map(),
+  sketches: SketchMode = 'library',
+): PageView {
   return {
     storyId: page.storyId,
     number: page.number,
@@ -302,9 +314,17 @@ export function toPageView(page: PageNode, pages: ReadonlyMap<number, PageNode> 
     choices: page.choices?.map((c) => ({ ...c, explored: (pages.get(c.page)?.visits ?? 0) > 0 })),
     isEnding: page.isEnding,
     endingTitle: page.endingTitle,
-    hasIllustration: Boolean(page.illustrationPrompt),
+    sketchUrl: sketchUrlFor(page, sketches),
     visits: page.visits,
   }
+}
+
+function sketchUrlFor(page: PageNode, mode: SketchMode): string | undefined {
+  if (mode === 'library') return isSketchId(page.sketch) ? sketchUrl(page.sketch) : undefined
+  if (mode === 'generate' && page.illustrationPrompt) {
+    return `/api/stories/${page.storyId}/pages/${page.number}/illustration`
+  }
+  return undefined
 }
 
 function makeId(random: () => number): string {

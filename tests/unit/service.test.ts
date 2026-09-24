@@ -268,7 +268,8 @@ describe('StoryService views and listings', () => {
     })
     expect(view).not.toHaveProperty('factsAdded')
     expect(view).not.toHaveProperty('illustrationPrompt')
-    expect(view.hasIllustration).toBe(true)
+    // No library sketch chosen, so nothing to show in the default mode.
+    expect(view.sketchUrl).toBeUndefined()
   })
 
   it('lists stories newest first with pages and endings counted', async () => {
@@ -283,10 +284,60 @@ describe('StoryService views and listings', () => {
   })
 })
 
-describe('StoryService.getIllustration', () => {
-  it('draws once, caches, and shares concurrent requests', async () => {
+describe('StoryService sketches from the library (default)', () => {
+  it('stores the sketch the model picked and points the page at the static file', async () => {
     const teller = new SpyTeller()
     const { service } = makeService({ teller })
+    const story = await service.createStory()
+    const page = await service.readPage(story.id, 1)
+    expect(page.sketch).toBeTruthy()
+    const view = await service.viewPage(story.id, page)
+    expect(view.sketchUrl).toBe(`/sketches/${page.sketch}.svg`)
+    expect(teller.drawCalls).toBe(0)
+  })
+
+  it('tells the model which sketch the previous page used', async () => {
+    const teller = new SpyTeller()
+    const { service } = makeService({ teller })
+    const story = await service.createStory()
+    const first = await service.readPage(story.id, 1)
+    await service.readPage(story.id, first.choices![0].page)
+    expect(teller.requests[0].previousSketch).toBeUndefined()
+    expect(teller.requests[1].previousSketch).toBe(first.sketch)
+  })
+
+  it('ignores a sketch id that is not in the library', async () => {
+    const teller = new SpyTeller()
+    const orig = teller.writePage.bind(teller)
+    teller.writePage = async (req) => ({ ...(await orig(req)), sketch: 'none' })
+    const { service } = makeService({ teller })
+    const story = await service.createStory()
+    const page = await service.readPage(story.id, 1)
+    expect(page.sketch).toBeUndefined()
+    expect((await service.viewPage(story.id, page)).sketchUrl).toBeUndefined()
+  })
+
+  it('never calls the image model', async () => {
+    const teller = new SpyTeller()
+    const { service } = makeService({ teller })
+    const story = await service.createStory()
+    await service.readPage(story.id, 1)
+    await expect(service.getIllustration(story.id, 1)).rejects.toBeInstanceOf(PageNotFoundError)
+    expect(teller.drawCalls).toBe(0)
+  })
+})
+
+describe('StoryService.getIllustration (generate mode)', () => {
+  it('points pages at the generated image', async () => {
+    const { service } = makeService({ sketches: 'generate' })
+    const story = await service.createStory()
+    const page = await service.readPage(story.id, 1)
+    expect((await service.viewPage(story.id, page)).sketchUrl).toBe(`/api/stories/${story.id}/pages/1/illustration`)
+  })
+
+  it('draws once, caches, and shares concurrent requests', async () => {
+    const teller = new SpyTeller()
+    const { service } = makeService({ teller, sketches: 'generate' })
     const story = await service.createStory()
     await service.readPage(story.id, 1)
     const [a, b] = await Promise.all([service.getIllustration(story.id, 1), service.getIllustration(story.id, 1)])
@@ -297,7 +348,7 @@ describe('StoryService.getIllustration', () => {
   })
 
   it('refuses to draw a page that is not written yet', async () => {
-    const { service } = makeService()
+    const { service } = makeService({ sketches: 'generate' })
     const story = await service.createStory()
     await expect(service.getIllustration(story.id, 1)).rejects.toBeInstanceOf(PageNotFoundError)
   })
@@ -308,10 +359,10 @@ describe('StoryService with sketches off', () => {
     const { MockStoryTeller } = await import('@/lib/ai/mock')
     const teller = new MockStoryTeller()
     const draw = vi.spyOn(teller, 'drawIllustration')
-    const { service } = makeService({ teller, sketches: false })
+    const { service } = makeService({ teller, sketches: 'off' })
     const story = await service.createStory()
     const page = await service.readPage(story.id, 1)
-    expect((await service.viewPage(story.id, page)).hasIllustration).toBe(false)
+    expect((await service.viewPage(story.id, page)).sketchUrl).toBeUndefined()
     await expect(service.getIllustration(story.id, 1)).rejects.toBeInstanceOf(PageNotFoundError)
     expect(draw).not.toHaveBeenCalled()
   })

@@ -13,7 +13,7 @@ Built for phones first. Every story is one of six kinds of book, each with its o
 | Dreamscape | A twilight sky with a slowly drifting aurora behind sheer pages, iridescent headings, glowing sketches over their own reflection | drift to 43 | the page dissolves as the next comes into focus |
 | Ancient myth | Papyrus framed by a Greek key, carved initials, sketches painted in a terracotta disc like black-figure pottery | go to XLIII | the scroll rolls up, or unrolls back |
 
-Words appear as they would be read (tap to read ahead), and a simple sketch appears on every page.
+Words appear as they would be read (tap to read ahead), and a simple line sketch appears on most pages, chosen from a hand-drawn library and recoloured to suit each theme.
 
 ## Getting started
 
@@ -22,8 +22,7 @@ Words appear as they would be read (tap to read ahead), and a simple sketch appe
 - **Node.js 22 or newer.**
 - **A Gemini API key** (optional). Without one, a built-in mock storyteller writes placeholder passages and sketches, so everything works offline.
   1. Go to [Google AI Studio → API keys](https://aistudio.google.com/apikey) and create a key.
-  2. For sketches, enable billing on that key's Google Cloud project. Gemini's image models have no free tier; text does. On a free key, set `SKETCHES=off` and stories still work, just without drawings.
-  3. Set a spending cap in the Google Cloud console before sharing the app with anyone.
+  2. Set a spending cap in the Google Cloud console before sharing the app with anyone.
 
 ### Run it
 
@@ -48,20 +47,20 @@ For a faster production build: `npm run build && npm start`.
 | `GEMINI_API_KEY` | unset | Your key. Unset means the mock storyteller. |
 | `AI_PROVIDER` | `gemini` if a key is set, else `mock` | Force `gemini` or `mock`. |
 | `GEMINI_TEXT_MODEL` | `gemini-3.8-flash` | Model that writes the story. |
-| `GEMINI_IMAGE_MODEL` | `gemini-3.1-flash-lite-image` | Model that draws the sketches. `gemini-3.1-flash-image` is sharper and costs twice as much. |
-| `SKETCHES` | `on` | `off` skips sketches entirely. |
+| `SKETCHES` | `library` | `library`: the model picks a drawing from the hand-drawn set, free. `generate`: an image model draws a new one per page (paid, needs billing). `off`: no sketches. |
+| `GEMINI_IMAGE_MODEL` | `gemini-3.1-flash-lite-image` | Only used with `SKETCHES=generate`. |
 | `PREFETCH_CHOICES` | `true` | Write the pages behind each choice while the reader is still reading, so turning is instant. `false` halves text cost but makes readers wait. |
 | `STORY_STORE` | `file` | `file` keeps stories in `.data/` across restarts; `memory` forgets them on restart. |
 
 ### What it costs
 
-At Google's September 2026 prices, a page costs roughly **$0.005–0.01** of text plus **$0.034** for its sketch (only drawn when someone views the page). A page is written once and every later reader sees it for free. Text prices for `gemini-3.8-flash` double on January 1, 2027.
+At Google's September 2026 prices, a page costs roughly **$0.005–0.01** of text, and library sketches cost nothing. A page is written once and every later reader sees it for free. Text prices for `gemini-3.8-flash` double on January 1, 2027. (With `SKETCHES=generate`, add about $0.034 per sketch.)
 
 ### Troubleshooting
 
 - **"The quill slipped. Please try again."** Writing the page failed. The terminal running the server shows the real error. Tapping *Try the page again* retries.
 - **Model not found errors.** Google renames models over time; set `GEMINI_TEXT_MODEL` / `GEMINI_IMAGE_MODEL` to current IDs from the [model list](https://ai.google.dev/gemini-api/docs/models).
-- **Pages write but no sketches appear.** Usually billing is not enabled for image generation. Enable it, or set `SKETCHES=off`.
+- **Pages write but no sketches appear with `SKETCHES=generate`.** Image models need billing enabled on the key's project. The default `library` mode needs nothing extra.
 - **Start fresh.** Stop the server and delete the `.data/` folder.
 
 ## How it works
@@ -71,7 +70,8 @@ At Google's September 2026 prices, a page costs roughly **$0.005–0.01** of tex
 - **Written ahead.** When a page is served, the pages behind its choices are generated in the background (`PREFETCH_CHOICES`).
 - **Continuity.** Each story has a *bible* (world, characters, fixed rules). Each page records the facts it establishes or retires, and the model gets only the facts true on *that* branch.
 - **Rules in code.** Page numbers and when a branch must end are decided in code (seeded, reproducible), never by the model.
-- **Themes.** `src/lib/themes.ts` holds each theme's narration voice, sketch style, presets and interface wording; `src/app/themes/*.css` holds its look. Sketches are always requested as black lines on white, and each theme recolours them in CSS.
+- **Themes.** `src/lib/themes.ts` holds each theme's narration voice, presets and interface wording; `src/app/themes/*.css` holds its look.
+- **Sketches.** Ten hand-drawn SVGs live in `public/sketches/` (door, key, lantern, lighthouse, ship, moon, stranger, scroll, tree, planet), described in `src/lib/sketches.ts`. When writing a page, the model also picks the sketch that fits best (or none), avoiding the previous page's. They are black lines on white, and each theme recolours them in CSS. To add one, draw a 200×200 SVG in the same style, save it in `public/sketches/`, and add its id and a description to `src/lib/sketches.ts`.
 - **Models.** Gemini text with structured JSON output writes each page; a Gemini image model draws each sketch. Both sit behind the `StoryTeller` interface in `src/lib/ai/`, so another provider can be swapped in.
 
 ## Tests

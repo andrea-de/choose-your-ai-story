@@ -72,6 +72,8 @@ export interface PageNode {
   factsRetired?: string[]
   isEnding?: boolean
   endingTitle?: string
+  /** Id of the library sketch the model chose for this page. */
+  sketch?: string
   illustrationPrompt?: string
   visits: number
   createdAt: number
@@ -93,7 +95,8 @@ export interface PageView {
   choices?: ChoiceView[]
   isEnding?: boolean
   endingTitle?: string
-  hasIllustration: boolean
+  /** Where the page's sketch is served from, if it has one. */
+  sketchUrl?: string
   visits: number
 }
 

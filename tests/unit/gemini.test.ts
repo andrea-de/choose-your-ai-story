@@ -42,6 +42,7 @@ describe('GeminiStoryTeller', () => {
       newFacts: [],
       retiredFactIds: [],
       endingTitle: '',
+      sketch: 'scroll',
       illustrationPrompt: 'a lute',
     }
     const { client, generateContent } = fakeClient({ text: JSON.stringify(draft) })

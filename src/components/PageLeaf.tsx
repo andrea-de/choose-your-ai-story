@@ -58,7 +58,6 @@ export function PageLeaf({
       {state.kind === 'ready' && (
         <WrittenPage
           key={state.page.number}
-          storyId={storyId}
           ui={ui}
           page={state.page}
           alreadyRead={alreadyRead}
@@ -71,14 +70,12 @@ export function PageLeaf({
 }
 
 function WrittenPage({
-  storyId,
   ui,
   page,
   alreadyRead,
   onChoose,
   onRead,
 }: {
-  storyId: string
   ui: ThemeUi
   page: PageView
   alreadyRead: boolean
@@ -91,9 +88,9 @@ function WrittenPage({
   const paragraphs = text.split(/\n\s*\n/)
   const firstParagraphWords = paragraphs[0]?.split(/\s+/).length ?? 0
 
-  const sketch = page.hasIllustration ? (
+  const sketch = page.sketchUrl ? (
     <Sketch
-      src={`/api/stories/${storyId}/pages/${page.number}/illustration`}
+      src={page.sketchUrl}
       appearAfter={revealed ? 0 : firstParagraphWords * ui.pace}
     />
   ) : null

@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { sketchIds } from '../sketches'
 import { themeIds } from '../themes'
 import type { ThemeId } from './types'
 
@@ -44,6 +45,9 @@ export const pageDraftSchema = z.object({
     .string()
     .max(80)
     .describe('On an ending, a short evocative name for it. Otherwise an empty string.'),
+  sketch: z
+    .enum(['none', ...sketchIds] as [string, ...string[]])
+    .describe('The drawing from the sketch list that best fits this page, or "none" if nothing does.'),
   illustrationPrompt: shortText(300).describe(
     'One simple object or figure from this passage to sketch, e.g. "a lantern hanging from a crooked branch".',
   ),

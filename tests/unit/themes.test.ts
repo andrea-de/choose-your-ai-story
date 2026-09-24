@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { MockStoryTeller, PHRASEBOOKS, SKETCHES } from '@/lib/ai/mock'
+import { existsSync, readFileSync } from 'node:fs'
+import { MockStoryTeller, PHRASEBOOKS } from '@/lib/ai/mock'
+import { SKETCH_LIBRARY, sketchIds } from '@/lib/sketches'
 import { pagePrompt } from '@/lib/story/prompts'
 import { newStoryRequestSchema } from '@/lib/story/schema'
 import { allThemes, getTheme, themeIds, toRoman } from '@/lib/themes'
@@ -78,11 +80,9 @@ describe('themes', () => {
 })
 
 describe('mock storyteller per theme', () => {
-  it('has a sketch for every item it can name', () => {
+  it('only names sketches that exist in the library', () => {
     for (const [id, book] of Object.entries(PHRASEBOOKS)) {
-      for (const item of book.items) {
-        expect(Object.keys(SKETCHES).some((k) => item.includes(k)), `${id}: ${item}`).toBe(true)
-      }
+      for (const item of book.items) expect(sketchIds, `${id}: ${item}`).toContain(item)
     }
   })
 
@@ -106,5 +106,29 @@ describe('mock storyteller per theme', () => {
     })
     expect(PHRASEBOOKS[id].openings.some((o) => page.text.startsWith(o))).toBe(true)
     for (const c of page.choices) expect(PHRASEBOOKS[id].choices).toContain(c)
+  })
+})
+
+describe('sketch library', () => {
+  it('has ten described sketches with unique ids', () => {
+    expect(SKETCH_LIBRARY).toHaveLength(10)
+    expect(new Set(sketchIds).size).toBe(sketchIds.length)
+    for (const s of SKETCH_LIBRARY) expect(s.description.length).toBeGreaterThan(20)
+  })
+
+  it.each(sketchIds)('%s has a black-on-white SVG file', (id) => {
+    const file = `public/sketches/${id}.svg`
+    expect(existsSync(file)).toBe(true)
+    const svg = readFileSync(file, 'utf8')
+    expect(svg).toMatch(/^<svg[^>]+viewBox="0 0 200 200"/)
+    expect(svg).toContain('stroke="#1b1206"')
+    // Static files are served as-is, so they must never carry script.
+    expect(svg).not.toMatch(/<script|on\w+=/i)
+  })
+
+  it('offers every sketch, plus none, to the model', async () => {
+    const { pageDraftJsonSchema } = await import('@/lib/story/schema')
+    const sketch = (pageDraftJsonSchema as { properties: { sketch: { enum: string[] } } }).properties.sketch
+    expect(sketch.enum).toEqual(['none', ...sketchIds])
   })
 })

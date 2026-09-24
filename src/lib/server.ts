@@ -4,7 +4,7 @@ import { GeminiStoryTeller } from './ai/gemini'
 import { MockStoryTeller } from './ai/mock'
 import type { StoryTeller } from './ai/types'
 import { MemoryStore } from './store/memory'
-import { StoryService } from './story/service'
+import { StoryService, type SketchMode } from './story/service'
 
 function createTeller(env: NodeJS.ProcessEnv): StoryTeller {
   const provider = env.AI_PROVIDER ?? (env.GEMINI_API_KEY ? 'gemini' : 'mock')
@@ -21,7 +21,12 @@ function createTeller(env: NodeJS.ProcessEnv): StoryTeller {
 
 export function createService(env: NodeJS.ProcessEnv = process.env): StoryService {
   const store = env.STORY_STORE === 'memory' ? new MemoryStore() : new MemoryStore(path.join(process.cwd(), '.data'))
-  return new StoryService(store, createTeller(env), { sketches: env.SKETCHES !== 'off' })
+  return new StoryService(store, createTeller(env), { sketches: sketchMode(env.SKETCHES) })
+}
+
+function sketchMode(value: string | undefined): SketchMode {
+  if (value === 'off' || value === 'generate') return value
+  return 'library'
 }
 
 const globalForService = globalThis as unknown as { storyService?: StoryService }

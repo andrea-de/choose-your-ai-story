@@ -1,3 +1,4 @@
+import { SKETCH_LIBRARY } from '../sketches'
 import type { Theme } from '../themes'
 import type { Fact, StoryBible, StoryConfig } from './types'
 
@@ -15,6 +16,8 @@ export interface PageRequest {
   choicesCount: number
   depth: number
   maxDepth: number
+  /** The sketch shown on the previous page, so the next can vary. */
+  previousSketch?: string
 }
 
 export function biblePrompt(config: StoryConfig, theme: Theme): string {
@@ -79,6 +82,13 @@ export function pagePrompt(req: PageRequest): string {
     )
     if (pagesLeft <= 2) sections.push('The story is nearing its end; raise the stakes.')
   }
+
+  sections.push(
+    'For sketch, pick the drawing below that best matches something on this page, or "none" if nothing fits.' +
+      (req.previousSketch ? ` The previous page showed "${req.previousSketch}"; prefer a different one if another fits.` : '') +
+      '\n' +
+      SKETCH_LIBRARY.map((s) => `- ${s.id}: ${s.description}`).join('\n'),
+  )
 
   sections.push(
     'Record in newFacts anything this page makes true that later pages must respect. ' +
