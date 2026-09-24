@@ -109,6 +109,7 @@ const themes = [
   { name: 'Future', id: 'future', begin: 'Launch', folio: 'LOG 001', choiceLabel: /jump to LOG \d{3}/ },
   { name: 'Noir', id: 'noir', begin: 'Open the Case', folio: 'No. 1', choiceLabel: /see file No\. \d+/ },
   { name: 'Pirate', id: 'pirate', begin: 'Set Sail', folio: '1', choiceLabel: /turn to \d+/ },
+  { name: 'Ancient Myth', id: 'ancient', begin: 'Begin', folio: 'I', choiceLabel: /go to [IVXLCDM]+/ },
 ]
 
 for (const t of themes) {

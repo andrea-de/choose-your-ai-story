@@ -274,6 +274,51 @@ export const PHRASEBOOKS: Record<ThemeId, Phrasebook> = {
     ],
     items: ['a ship', 'an anchor', 'a compass', 'a key', 'a lantern'],
   },
+  ancient: {
+    titleNouns: ['Silent Oracle', 'Bronze Bull', 'Ninth Labor', 'Golden Thread', 'Owl’s Bargain', 'Last Nymph'],
+    titlePlaces: ['Knossos', 'the Wine-Dark Sea', 'Delphi', 'the Styx', 'Ithaca'],
+    premiseHook: 'The gods have fallen quiet, and a stranger at the well says they are waiting for you.',
+    names: ['Ariadne', 'old Tiresias', 'Captain Nikias', 'the sorceress Kirke', 'Glaukos the fisherman', 'Phaedra'],
+    rules: ['The gods keep every bargain to the letter, never the spirit.', 'No mortal may look back on the road out of the Underworld.'],
+    openings: [
+      'Rosy-fingered dawn spreads across the sea, and the gulls cry out as if in warning.',
+      'The smoke from the altar rises straight up, then bends, as though something breathed on it.',
+      'At the crossroads stands a woman in a gray cloak, and the owl on her shoulder does not blink.',
+    ],
+    transitions: [
+      'Somewhere far above, thunder rolls across a cloudless sky.',
+      'The wind turns, carrying the smell of salt and burnt offerings.',
+      'A shadow crosses the sun, and the whole valley holds its breath.',
+    ],
+    details: [
+      'Olive trees shiver silver in the breeze, and cicadas sing in the heat.',
+      'The marble is warm beneath your hand, carved with heroes whose names the rain has worn away.',
+      'Down in the harbor, black-hulled ships creak at their moorings like restless horses.',
+      'Incense and crushed thyme hang in the air of the temple.',
+      'Like a hawk above the fields, the thought circles and will not land.',
+      'Painted on an old wine jar, a hero wrestles a lion, and for a moment the lion seems to move.',
+    ],
+    hooks: [
+      'Then the oracle’s voice comes from the dark: three words, and one of them is your name.',
+      'From the sea rises a bull as white as foam, and it is looking straight at you.',
+      'A golden thread lies across the path, leading down into the labyrinth.',
+    ],
+    endings: [
+      'And so the song is sung, and the Muse falls silent, and the stars take up your story.',
+      'You return home at last, older and wiser, and the gods, for once, are pleased.',
+      'Fate has had its way, as fate does, but the poets will remember your name.',
+    ],
+    endingTitles: ['The Homecoming', 'A Bargain Kept', 'Among the Stars', 'The Oracle’s Price'],
+    choices: [
+      'Follow the golden thread',
+      'Make an offering at the altar',
+      'Ask the owl what it knows',
+      'Sail for the island at dawn',
+      'Challenge the stranger to a riddle',
+      'Descend into the labyrinth',
+    ],
+    items: ['an amphora', 'an owl', 'a lyre', 'a helmet', 'a ship'],
+  },
 }
 
 const stroke = 'fill="none" stroke="#1b1206" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"'
@@ -334,6 +379,24 @@ export const SKETCHES: Record<string, string> = {
   anchor: svg(
     '<circle cx="100" cy="42" r="12"/><path d="M100 54v112"/><path d="M76 78h48"/>' +
       '<path d="M46 124c4 30 30 44 54 42 24 2 50-12 54-42"/><path d="M46 124l-8 10M46 124l12 4M154 124l8 10M154 124l-12 4"/>',
+  ),
+  amphora: svg(
+    '<path d="M84 40h32M88 40v14c-30 12-40 46-26 78 8 18 20 30 38 34 18-4 30-16 38-34 14-32 4-66-26-78V40"/>' +
+      '<path d="M88 58c-18-6-26 6-22 22M112 58c18-6 26 6 22 22"/><path d="M70 104h60M74 120h52"/>' +
+      '<path d="M86 104l6 16M100 104v16M114 104l-6 16"/><path d="M90 166l-4 10h28l-4-10"/>',
+  ),
+  owl: svg(
+    '<path d="M70 70c0-20 60-20 60 0v56c0 26-60 26-60 0z"/><path d="M70 64l-6-16 18 10M130 64l6-16-18 10"/>' +
+      '<circle cx="86" cy="80" r="11"/><circle cx="114" cy="80" r="11"/><circle cx="86" cy="80" r="3"/><circle cx="114" cy="80" r="3"/>' +
+      '<path d="M100 88l-5 8h10z"/><path d="M84 112l6 6 6-6 6 6 6-6 6 6"/><path d="M60 150h80M86 150v-10M114 150v-10"/>',
+  ),
+  lyre: svg(
+    '<path d="M70 160c-26-30-16-80 8-104M130 160c26-30 16-80-8-104"/><path d="M78 56c-4-10 2-18 10-16M122 56c4-10-2-18-10-16"/>' +
+      '<path d="M76 74h48"/><path d="M68 160h64"/><path d="M88 74v86M100 74v86M112 74v86"/>',
+  ),
+  helmet: svg(
+    '<path d="M60 150V96c0-36 80-36 80 0v54"/><path d="M60 150h24v-34h-10v-14h52v14h-10v34h24"/><path d="M100 102v40"/>' +
+      '<path d="M60 70c20-40 60-40 80 0"/><path d="M58 70c14-24 70-24 84 0" stroke-dasharray="3 6"/>',
   ),
   compass: svg(
     '<circle cx="100" cy="100" r="60"/><circle cx="100" cy="100" r="50"/><path d="M100 36l10 54 54 10-54 10-10 54-10-54-54-10 54-10z"/>' +

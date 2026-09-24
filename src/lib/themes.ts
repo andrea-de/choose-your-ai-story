@@ -45,6 +45,22 @@ export interface Theme {
 
 const plain = (n: number) => String(n)
 
+/** 43 → "XLIII". Page numbers stay well under 4000. */
+export function toRoman(n: number): string {
+  const numerals: [number, string][] = [
+    [1000, 'M'], [900, 'CM'], [500, 'D'], [400, 'CD'], [100, 'C'], [90, 'XC'],
+    [50, 'L'], [40, 'XL'], [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I'],
+  ]
+  let out = ''
+  for (const [value, symbol] of numerals) {
+    while (n >= value) {
+      out += symbol
+      n -= value
+    }
+  }
+  return out
+}
+
 export const historicFantasy: Theme = {
   id: 'historic-fantasy',
   name: 'Historic Fantasy',
@@ -277,11 +293,71 @@ export const pirate: Theme = {
   },
 }
 
+export const ancient: Theme = {
+  id: 'ancient',
+  name: 'Ancient Myth',
+  tagline: 'Gods, heroes and the wine-dark sea',
+  narration:
+    'Write like an ancient myth sung aloud: second person, present tense, with the rhythm of epic poetry, ' +
+    'vivid epithets and the occasional epic simile. Gods watch, bargain and meddle; oracles speak in riddles; ' +
+    'fate and cunning pull against each other. Plain modern English, never mock-archaic. ' +
+    'Family-friendly: monsters and trials, no gore.',
+  illustration:
+    'Simple figure in the style of ancient Greek black-figure pottery: flat black silhouette with a few thin ' +
+    'incised lines, on a pure white background, no color, no border, no text or lettering. ' +
+    'A single subject, centered, with plenty of empty space around it.',
+  heroes: [
+    'a shepherd who can hear the gods',
+    'an exiled princess of Crete',
+    'a potter’s son with a stolen spear',
+    'a priestess whose oracle has fallen silent',
+    'a runner carrying word of war',
+    'a sailor spared by a sea-nymph',
+    'a clever servant in a king’s house',
+    'an old poet going blind',
+  ],
+  settings: [
+    'the wine-dark Aegean',
+    'a labyrinth beneath a palace',
+    'the foothills of Mount Olympus',
+    'a city under a ten-year siege',
+    'the island of a sorceress',
+    'the gates of the Underworld',
+    'a temple where the oracle has fallen silent',
+    'the markets of Alexandria at midsummer',
+  ],
+  tones: ['heroic', 'tragic', 'wondrous', 'cunning', 'fated'],
+  ui: {
+    turnTo: 'go to',
+    pageLabel: toRoman,
+    finis: 'Here the Song Ends',
+    unwritten: 'untrodden by any mortal',
+    waiting: 'The oracle is speaking…',
+    tapHint: 'tap to hear it all',
+    goBack: 'Return to the crossroads',
+    beginAgain: 'Begin the song again',
+    anotherBook: 'Choose another myth',
+    toLibrary: 'return to the library',
+    firstToEnd: 'You are the first mortal to meet this fate',
+    foundBy: (n) => `${n} heroes have met this fate`,
+    heroLabel: 'Sing of',
+    settingLabel: 'In',
+    toneLabel: 'And the song is',
+    begin: 'Begin',
+    roll: 'Cast the bones',
+    binding: 'The Muse is singing…',
+    fleuron: '⁘',
+    endMark: 'Ω',
+    pace: 115,
+  },
+}
+
 const themes: Record<ThemeId, Theme> = {
   'historic-fantasy': historicFantasy,
   future,
   noir,
   pirate,
+  ancient,
 }
 
 export function getTheme(id: ThemeId): Theme {

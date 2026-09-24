@@ -2,11 +2,17 @@ import { describe, expect, it } from 'vitest'
 import { MockStoryTeller, PHRASEBOOKS, SKETCHES } from '@/lib/ai/mock'
 import { pagePrompt } from '@/lib/story/prompts'
 import { newStoryRequestSchema } from '@/lib/story/schema'
-import { allThemes, getTheme, themeIds } from '@/lib/themes'
+import { allThemes, getTheme, themeIds, toRoman } from '@/lib/themes'
 
 describe('themes', () => {
-  it('offers the four kinds of book', () => {
-    expect(themeIds).toEqual(['historic-fantasy', 'future', 'noir', 'pirate'])
+  it('offers the five kinds of book', () => {
+    expect(themeIds).toEqual(['historic-fantasy', 'future', 'noir', 'pirate', 'ancient'])
+  })
+
+  it('writes Roman numerals', () => {
+    expect([1, 4, 9, 14, 40, 43, 90, 99, 198, 383, 400].map(toRoman)).toEqual([
+      'I', 'IV', 'IX', 'XIV', 'XL', 'XLIII', 'XC', 'XCIX', 'CXCVIII', 'CCCLXXXIII', 'CD',
+    ])
   })
 
   it.each(allThemes.map((t) => [t.id, t] as const))('%s is complete', (_id, theme) => {
@@ -32,6 +38,7 @@ describe('themes', () => {
     expect(getTheme('future').ui.pageLabel(312)).toBe('LOG 312')
     expect(getTheme('noir').ui.pageLabel(43)).toBe('No. 43')
     expect(getTheme('pirate').ui.pageLabel(43)).toBe('43')
+    expect(getTheme('ancient').ui.pageLabel(43)).toBe('XLIII')
   })
 
   it('shows symbols as text, not colour emoji', () => {

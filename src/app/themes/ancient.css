@@ -1,0 +1,293 @@
+/* Ancient myth: a papyrus scroll framed by a Greek key, sketches painted on terracotta like black-figure pottery. */
+
+.desk[data-theme='ancient'] {
+  --ink: #2b1a10;
+  --ink-soft: #5e4630;
+  --ink-faint: #8f7456;
+  --rubric: #a8492a;
+  --desk: #170d08;
+  --desk-image:
+    radial-gradient(ellipse at 50% 35%, rgba(168, 73, 42, 0.35), transparent 65%),
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.15) 0 1px, transparent 1px 64px),
+    var(--grain);
+  --font-body: 'GFS Didot', 'Iowan Old Style', Georgia, serif;
+  --font-caps: 'Cinzel', 'GFS Didot', Georgia, serif;
+  --font-display: 'Cinzel', 'GFS Didot', Georgia, serif;
+  --font-initial: 'Cinzel', Georgia, serif;
+  --ribbon-a: #7a3219;
+  --ribbon-b: #a8492a;
+  --ribbon-ink: #f3dfb7;
+  --under-shadow: rgba(40, 20, 5, 0.35);
+  /* Keep lines black so they read as black-figure paint on terracotta. */
+  --sketch-tone: contrast(1.5) brightness(0.85);
+  --sketch-opacity: 1;
+  --meander: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='rgba(168,73,42,0.75)' stroke-width='2.2' stroke-linecap='square'%3E%3Cpath d='M0 21H21V3H6V15H15V9H11'/%3E%3C/svg%3E");
+}
+
+.desk[data-theme='ancient'] .book {
+  perspective: none;
+}
+
+/* Papyrus: crossed layers of reed fibre, a Greek key along the top and bottom. */
+.desk[data-theme='ancient'] .paper,
+.desk[data-theme='ancient'] .leaf.paper,
+.desk.theme-sample[data-theme='ancient'] .paper {
+  background-color: #e9d6a8;
+  background-image:
+    var(--band-top, none),
+    var(--band-bottom, none),
+    repeating-linear-gradient(0deg, rgba(120, 85, 30, 0.1) 0 1px, transparent 1px 5px),
+    repeating-linear-gradient(0deg, rgba(120, 85, 30, 0.06) 0 3px, transparent 3px 17px),
+    repeating-linear-gradient(90deg, rgba(120, 85, 30, 0.07) 0 2px, transparent 2px 13px),
+    repeating-linear-gradient(90deg, rgba(255, 246, 220, 0.14) 0 6px, transparent 6px 41px),
+    radial-gradient(ellipse at 35% 25%, rgba(255, 248, 225, 0.6), transparent 55%),
+    var(--mottle),
+    var(--grain);
+  background-size: 24px 24px, 24px 24px, auto, auto, auto, auto, auto, 900px 900px, 240px 240px;
+  background-position: 0 12px, 0 calc(100% - 12px), 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0;
+  background-repeat: repeat-x, repeat-x, repeat, repeat, repeat, repeat, no-repeat, repeat, repeat;
+  box-shadow:
+    inset 0 0 70px rgba(110, 70, 20, 0.45),
+    inset 0 0 12px rgba(90, 55, 15, 0.35);
+}
+
+@media (min-width: 700px) {
+  .desk[data-theme='ancient'] .leaf {
+    border-radius: 3px;
+    box-shadow:
+      inset 0 0 70px rgba(110, 70, 20, 0.45),
+      0 30px 60px rgba(0, 0, 0, 0.6),
+      0 4px 12px rgba(0, 0, 0, 0.45);
+  }
+}
+
+.desk[data-theme='ancient'] .leaf-inner,
+.desk[data-theme='ancient'] .title-page .leaf-inner {
+  padding-top: calc(env(safe-area-inset-top) + 54px);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 64px);
+}
+
+.desk[data-theme='ancient'] .prose {
+  font-size: clamp(1.14rem, 4.4vw, 1.3rem);
+  line-height: 1.66;
+}
+
+/* A framed capital, as carved above a temple door. */
+.desk[data-theme='ancient'] .drop-cap {
+  font-weight: 700;
+  font-size: 2.9em;
+  line-height: 1;
+  color: var(--rubric);
+  border: 2px solid var(--rubric);
+  padding: 0.08em 0.16em 0.02em;
+  margin: 0.12em 0.22em 0 0;
+  text-shadow: none;
+}
+
+.desk[data-theme='ancient'] .folio {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--rubric);
+  letter-spacing: 0.2em;
+}
+
+.desk[data-theme='ancient'] .story-title {
+  letter-spacing: 0.24em;
+}
+
+/* The sketch is painted inside a terracotta disc, like the tondo of a drinking cup. */
+.desk[data-theme='ancient'] .sketch {
+  width: min(50%, 210px);
+  padding: 8%;
+  margin: 0.4rem auto 1.4rem;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 42% 38%, rgba(255, 210, 170, 0.22), transparent 55%),
+    radial-gradient(circle, #bb6a42 0 62%, #231710 62.5% 64%, #b56440 64.5% 67%, #231710 67.5% 69.5%, #a45934 70%);
+  box-shadow:
+    0 6px 14px rgba(60, 25, 5, 0.35),
+    inset 0 0 22px rgba(80, 30, 5, 0.35);
+}
+
+.desk[data-theme='ancient'] .fleuron {
+  font-size: 1.3rem;
+  letter-spacing: 0.4em;
+}
+
+.desk[data-theme='ancient'] .choice-text,
+.desk[data-theme='ancient'] .book-subtitle,
+.desk[data-theme='ancient'] .finis-title,
+.desk[data-theme='ancient'] .contents-premise,
+.desk[data-theme='ancient'] .config-input,
+.desk[data-theme='ancient'] .tone,
+.desk[data-theme='ancient'] .quill-wait p,
+.desk[data-theme='ancient'] .choice-unwritten {
+  font-style: normal;
+}
+
+.desk[data-theme='ancient'] .choice-turn {
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+
+.desk[data-theme='ancient'] .choice-turn .page-no {
+  font-size: 1.1rem;
+  letter-spacing: 0.12em;
+}
+
+/* Changing passages: the scroll rolls up, or unrolls back down. */
+.desk[data-theme='ancient'] .leaf {
+  transform-origin: center top;
+}
+
+.desk[data-theme='ancient'] .leaf.turning.forward {
+  animation-name: roll-up;
+  animation-duration: 640ms;
+}
+
+.desk[data-theme='ancient'] .leaf.turning.backward {
+  animation-name: roll-down;
+  animation-duration: 640ms;
+}
+
+.desk[data-theme='ancient'] .leaf.turning::after {
+  background: linear-gradient(to top, rgba(70, 40, 10, 0.6), rgba(70, 40, 10, 0.15) 6%, transparent 14%);
+  animation: none;
+  opacity: 1;
+}
+
+@keyframes roll-up {
+  from {
+    transform: scaleY(1);
+  }
+  to {
+    transform: scaleY(0);
+  }
+}
+
+@keyframes roll-down {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+/* Waiting: smoke rising from the oracle's tripod. */
+.desk[data-theme='ancient'] .quill-wait svg {
+  animation: none;
+}
+
+.desk[data-theme='ancient'] .oracle-smoke {
+  stroke-dasharray: 40;
+  stroke-dashoffset: 40;
+  animation: smoke 2.4s ease-in-out infinite;
+}
+
+.desk[data-theme='ancient'] .oracle-smoke:nth-of-type(2) {
+  animation-delay: 0.8s;
+}
+
+.desk[data-theme='ancient'] .oracle-smoke:nth-of-type(3) {
+  animation-delay: 1.6s;
+}
+
+@keyframes smoke {
+  0% {
+    stroke-dashoffset: 40;
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.9;
+  }
+  100% {
+    stroke-dashoffset: -40;
+    opacity: 0;
+  }
+}
+
+.desk[data-theme='ancient'] .finis-word {
+  font-size: 1.45rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.desk[data-theme='ancient'] .ribbon {
+  top: 30px;
+}
+
+/* ---------- Title page ---------- */
+
+.desk[data-theme='ancient'] .book-title {
+  font-size: clamp(2rem, 9.4vw, 2.8rem);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.desk[data-theme='ancient'] .section-heading {
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  font-size: 0.9rem;
+}
+
+/* A bronze coin in place of the wax seal. */
+.desk[data-theme='ancient'] .seal {
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 235, 180, 0.55), transparent 40%),
+    radial-gradient(circle, #b98a3e 0 58%, #8f6424 74%, #5e3f14 100%);
+  box-shadow:
+    0 6px 14px rgba(40, 20, 0, 0.45),
+    inset 0 -4px 10px rgba(60, 30, 0, 0.45),
+    inset 0 3px 6px rgba(255, 235, 180, 0.35);
+  color: #3b2508;
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 0 rgba(255, 230, 170, 0.6);
+}
+
+.desk[data-theme='ancient'] .seal::before {
+  inset: 9px;
+  border: 1.5px dotted rgba(60, 35, 5, 0.55);
+  box-shadow: none;
+}
+
+.theme-sample[data-theme='ancient'] .theme-sample-name {
+  font-size: 0.95rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.desk.theme-sample[data-theme='ancient'] .paper {
+  --band-top: var(--meander);
+  --band-bottom: var(--meander);
+  background-position: 0 -6px, 0 calc(100% + 6px), 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0;
+}
+
+/* The Greek key sits on fixed bands above and below the page, so text scrolls behind it. */
+.desk[data-theme='ancient'] .book::before,
+.desk[data-theme='ancient'] .book::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  height: 46px;
+  pointer-events: none;
+  background:
+    var(--meander) repeat-x 0 12px / 24px 24px,
+    linear-gradient(to right, rgba(110, 70, 20, 0.28), transparent 60px, transparent calc(100% - 60px), rgba(110, 70, 20, 0.28)),
+    linear-gradient(to bottom, #e3cf9f 72%, rgba(227, 207, 159, 0));
+}
+
+.desk[data-theme='ancient'] .book::before {
+  top: 0;
+}
+
+.desk[data-theme='ancient'] .book::after {
+  bottom: 0;
+  transform: scaleY(-1);
+}

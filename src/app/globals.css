@@ -1019,3 +1019,8 @@ a {
   letter-spacing: 0.08em;
   margin-right: 0.25rem;
 }
+
+/* An odd tile out spans the row instead of sitting alone. */
+.theme-tile:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}

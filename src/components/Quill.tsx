@@ -44,6 +44,16 @@ function WaitIcon({ theme }: { theme: ThemeId }) {
           <circle cx="32" cy="32" r="2.5" fill="currentColor" stroke="none" />
         </svg>
       )
+    case 'ancient':
+      return (
+        <svg {...common}>
+          <path className="oracle-smoke" d="M28 30c-4-6 4-10 0-16s4-10 0-14" />
+          <path className="oracle-smoke" d="M34 30c4-6-4-10 0-16s-4-10 0-14" />
+          <path className="oracle-smoke" d="M31 30c-3-5 3-9 0-14" />
+          <path d="M18 32h28c0 6-6 10-14 10s-14-4-14-10z" />
+          <path d="M22 40l-6 18M42 40l6 18M32 42v16" />
+        </svg>
+      )
     default:
       return (
         <>

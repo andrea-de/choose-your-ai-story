@@ -15,10 +15,14 @@ import '@fontsource/limelight/400.css'
 import '@fontsource/pirata-one/400.css'
 import '@fontsource/im-fell-dw-pica/400.css'
 import '@fontsource/im-fell-dw-pica/400-italic.css'
+import '@fontsource/cinzel/400.css'
+import '@fontsource/cinzel/700.css'
+import '@fontsource/gfs-didot/400.css'
 import './globals.css'
 import './themes/future.css'
 import './themes/noir.css'
 import './themes/pirate.css'
+import './themes/ancient.css'
 
 export const metadata: Metadata = {
   title: { default: 'Tales Unwritten', template: '%s · Tales Unwritten' },
