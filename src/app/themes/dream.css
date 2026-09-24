@@ -1,0 +1,419 @@
+/* Dreamscape: a twilight sky with a drifting aurora; text surfaces from blur; pages dissolve into each other. */
+
+.desk[data-theme='dream'] {
+  --ink: #eee8ff;
+  --ink-soft: #bdb2e6;
+  --ink-faint: #8e84bd;
+  --rubric: #f7b8dc;
+  --desk: #0c0a1c;
+  --desk-image:
+    radial-gradient(ellipse at 30% 20%, rgba(150, 110, 255, 0.25), transparent 55%),
+    radial-gradient(ellipse at 75% 80%, rgba(90, 210, 220, 0.14), transparent 50%);
+  --font-body: 'Cormorant Garamond', 'Iowan Old Style', Georgia, serif;
+  --font-caps: 'Poiret One', 'Cormorant Garamond', sans-serif;
+  --font-display: 'Poiret One', 'Cormorant Garamond', sans-serif;
+  --font-initial: 'Cormorant Garamond', Georgia, serif;
+  --ribbon-a: rgba(255, 255, 255, 0.08);
+  --ribbon-b: rgba(255, 255, 255, 0.16);
+  --ribbon-ink: #f3e9ff;
+  --iridescent: linear-gradient(100deg, #c9b6ff 0%, #ffc1dc 35%, #ffe3b8 60%, #aef0e6 100%);
+  --sky:
+    radial-gradient(1.5px 1.5px at 14% 22%, rgba(255, 255, 255, 0.85) 50%, transparent 51%),
+    radial-gradient(1px 1px at 68% 14%, rgba(255, 255, 255, 0.7) 50%, transparent 51%),
+    radial-gradient(1px 1px at 86% 58%, rgba(255, 240, 255, 0.6) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 34% 78%, rgba(220, 230, 255, 0.7) 50%, transparent 51%),
+    radial-gradient(1px 1px at 52% 42%, rgba(255, 255, 255, 0.5) 50%, transparent 51%),
+    radial-gradient(ellipse at 18% 12%, rgba(170, 120, 255, 0.4), transparent 50%),
+    radial-gradient(ellipse at 88% 34%, rgba(255, 140, 190, 0.26), transparent 45%),
+    radial-gradient(ellipse at 38% 92%, rgba(80, 210, 220, 0.24), transparent 50%),
+    linear-gradient(170deg, #211a45, #16122f 55%, #0f0c24);
+}
+
+.desk[data-theme='dream'] .book {
+  perspective: none;
+  background: #120f28;
+}
+
+/* The sky lives behind the pages and drifts slowly, like breathing. */
+.desk[data-theme='dream'] .book::before {
+  content: '';
+  position: absolute;
+  inset: -25%;
+  z-index: 0;
+  background: var(--sky);
+  background-size: 260px 260px, 310px 310px, 280px 280px, 340px 340px, 220px 220px, auto, auto, auto, auto;
+  animation: aurora 36s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes aurora {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+    filter: hue-rotate(0deg);
+  }
+  50% {
+    transform: translate(4%, -3%) rotate(4deg);
+  }
+  100% {
+    transform: translate(-3%, 4%) rotate(-3deg);
+    filter: hue-rotate(35deg);
+  }
+}
+
+/* Pages are sheer, so the sky shows through. */
+.desk[data-theme='dream'] .leaf.paper {
+  background: radial-gradient(ellipse at 50% 40%, rgba(20, 16, 44, 0.2), rgba(10, 8, 24, 0.55));
+  box-shadow: inset 0 0 90px rgba(5, 3, 15, 0.7);
+}
+
+.desk.theme-sample[data-theme='dream'] .paper {
+  background: var(--sky);
+  background-size: 120px 120px, 140px 140px, 130px 130px, 150px 150px, 110px 110px, auto, auto, auto, auto;
+  box-shadow: inset 0 0 30px rgba(5, 3, 15, 0.6);
+}
+
+@media (min-width: 700px) {
+  .desk[data-theme='dream'] .book {
+    border-radius: 18px;
+    box-shadow:
+      0 0 60px rgba(160, 120, 255, 0.25),
+      0 30px 60px rgba(0, 0, 0, 0.6);
+  }
+
+  .desk[data-theme='dream'] .leaf {
+    border-radius: 18px;
+    box-shadow: inset 0 0 90px rgba(5, 3, 15, 0.7);
+  }
+}
+
+.desk[data-theme='dream'] .prose {
+  font-size: clamp(1.26rem, 5vw, 1.44rem);
+  font-weight: 500;
+  line-height: 1.58;
+  text-shadow: 0 0 18px rgba(200, 170, 255, 0.25);
+}
+
+.desk[data-theme='dream'] .prose p + p {
+  text-indent: 0;
+}
+
+.desk[data-theme='dream'] .drop-cap {
+  font-style: italic;
+  font-weight: 600;
+  font-size: 4em;
+  line-height: 0.85;
+  padding: 0.04em 0.1em 0 0;
+  background: var(--iridescent);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: none;
+}
+
+/* Words surface out of a haze. */
+.desk[data-theme='dream'] .word {
+  animation-name: surface;
+  animation-duration: 1100ms;
+}
+
+.desk[data-theme='dream'] .revealed .word {
+  animation-name: surface;
+  animation-duration: 400ms;
+}
+
+.desk[data-theme='dream'] .drop-cap.word {
+  animation-name: initial-in;
+  animation-duration: 1400ms;
+}
+
+@keyframes surface {
+  0% {
+    opacity: 0;
+    filter: blur(7px);
+    color: var(--rubric);
+  }
+  60% {
+    opacity: 0.8;
+    filter: blur(1px);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0);
+    color: var(--ink);
+  }
+}
+
+.desk[data-theme='dream'] .folio {
+  letter-spacing: 0.3em;
+  color: var(--ink-soft);
+}
+
+.desk[data-theme='dream'] .folio::before,
+.desk[data-theme='dream'] .folio::after {
+  width: auto;
+  height: auto;
+  background: none;
+  color: var(--rubric);
+  font-family: var(--font-body);
+  letter-spacing: 0;
+}
+
+.desk[data-theme='dream'] .folio::before {
+  content: '☾';
+}
+
+.desk[data-theme='dream'] .folio::after {
+  content: '☽';
+}
+
+.desk[data-theme='dream'] .story-title {
+  letter-spacing: 0.26em;
+}
+
+/* Sketches glow, float, and hover over their own reflection. */
+.desk[data-theme='dream'] .sketch {
+  /* Room below for the reflection, which would otherwise sit on the next paragraph. */
+  margin-bottom: 5.5rem;
+  animation: float 7s ease-in-out infinite;
+}
+
+.desk[data-theme='dream'] .sketch img {
+  mix-blend-mode: screen;
+  filter: invert(1) sepia(0.5) hue-rotate(210deg) saturate(2.4) brightness(1.1) drop-shadow(0 0 8px rgba(210, 180, 255, 0.65));
+  -webkit-box-reflect: below 2px linear-gradient(transparent 62%, rgba(255, 255, 255, 0.26));
+  clip-path: none;
+  opacity: 0;
+  animation-name: materialize;
+  animation-duration: 2200ms;
+}
+
+@keyframes materialize {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.desk[data-theme='dream'] .fleuron {
+  color: var(--rubric);
+  font-size: 1.3rem;
+  text-shadow: 0 0 12px rgba(247, 184, 220, 0.7);
+}
+
+.desk[data-theme='dream'] .choice {
+  border-bottom-color: rgba(200, 180, 255, 0.16);
+}
+
+.desk[data-theme='dream'] .choice:hover,
+.desk[data-theme='dream'] .choice:active {
+  background-color: rgba(200, 170, 255, 0.08);
+}
+
+.desk[data-theme='dream'] .choice-text {
+  font-size: 1.24rem;
+  font-weight: 500;
+}
+
+.desk[data-theme='dream'] .choice-turn {
+  font-size: 0.95rem;
+  letter-spacing: 0.16em;
+}
+
+.desk[data-theme='dream'] .choice-turn .page-no,
+.desk[data-theme='dream'] .finis-word,
+.desk[data-theme='dream'] .book-title {
+  background: var(--iridescent);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.desk[data-theme='dream'] .choice-turn .page-no {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 1.4rem;
+}
+
+.desk[data-theme='dream'] .choice-unwritten {
+  font-size: 0.92rem;
+}
+
+/* Changing pages: the old one dissolves as the new one comes into focus. */
+.desk[data-theme='dream'] .leaf {
+  transform-origin: center;
+}
+
+.desk[data-theme='dream'] .leaf.turning.forward {
+  animation-name: dissolve-out;
+  animation-duration: 740ms;
+}
+
+.desk[data-theme='dream'] .leaf.turning.backward {
+  animation-name: dissolve-in;
+  animation-duration: 740ms;
+}
+
+.desk[data-theme='dream'] .leaf.turning::after,
+.desk[data-theme='dream'] .leaf.under.shadowed::after {
+  display: none;
+}
+
+.desk[data-theme='dream'] .leaf.under.forward {
+  animation: focus-in 740ms ease forwards;
+}
+
+@keyframes dissolve-out {
+  to {
+    opacity: 0;
+    filter: blur(14px);
+    transform: scale(1.08);
+  }
+}
+
+@keyframes dissolve-in {
+  from {
+    opacity: 0;
+    filter: blur(14px);
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    filter: none;
+    transform: none;
+  }
+}
+
+@keyframes focus-in {
+  from {
+    opacity: 0;
+    filter: blur(10px);
+  }
+  to {
+    opacity: 1;
+    filter: none;
+  }
+}
+
+/* Waiting: a slowly turning spiral. */
+.desk[data-theme='dream'] .quill-wait svg {
+  animation: none;
+  color: var(--rubric);
+}
+
+.desk[data-theme='dream'] .dream-spiral {
+  transform-origin: 32px 32px;
+  animation: spiral 6s linear infinite;
+}
+
+@keyframes spiral {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+.desk[data-theme='dream'] .finis-word {
+  font-size: 1.9rem;
+  letter-spacing: 0.08em;
+}
+
+.desk[data-theme='dream'] .ribbon {
+  clip-path: none;
+  top: 14px;
+  width: 38px;
+  height: 38px;
+  padding-top: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 0 16px rgba(200, 170, 255, 0.35);
+}
+
+/* ---------- Title page ---------- */
+
+.desk[data-theme='dream'] .book-title {
+  font-weight: 400;
+  font-size: clamp(2.4rem, 12vw, 3.4rem);
+  letter-spacing: 0.04em;
+  filter: drop-shadow(0 0 14px rgba(200, 170, 255, 0.35));
+}
+
+.desk[data-theme='dream'] .section-heading {
+  letter-spacing: 0.26em;
+}
+
+.desk[data-theme='dream'] .config-input {
+  font-size: 1.26rem;
+  font-weight: 500;
+  border-bottom-color: rgba(200, 180, 255, 0.35);
+}
+
+.desk[data-theme='dream'] .tone {
+  font-size: 1.08rem;
+  border-color: rgba(200, 180, 255, 0.3);
+}
+
+/* A pearl with an iridescent sheen sliding across it. */
+.desk[data-theme='dream'] .seal {
+  border-radius: 50%;
+  background:
+    linear-gradient(115deg, transparent 30%, rgba(255, 190, 220, 0.45) 42%, rgba(170, 240, 230, 0.4) 52%, rgba(255, 230, 180, 0.35) 60%, transparent 72%),
+    radial-gradient(circle at 35% 30%, #ffffff, #e9dcff 30%, #c8b4f0 65%, #9a86cf);
+  background-size: 260% 260%, 100% 100%;
+  animation: sheen 6s ease-in-out infinite;
+  box-shadow:
+    0 0 26px rgba(210, 180, 255, 0.55),
+    inset 0 -6px 14px rgba(90, 60, 150, 0.45);
+  color: #3a2a66;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.15rem;
+  letter-spacing: 0.12em;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.desk[data-theme='dream'] .seal::before {
+  display: none;
+}
+
+@keyframes sheen {
+  0%,
+  100% {
+    background-position: 100% 100%, 0 0;
+  }
+  50% {
+    background-position: 0 0, 0 0;
+  }
+}
+
+.theme-sample[data-theme='dream'] .theme-sample-name {
+  font-weight: 400;
+  font-size: 1.2rem;
+  letter-spacing: 0.08em;
+  background: var(--iridescent);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .desk[data-theme='dream'] .book::before,
+  .desk[data-theme='dream'] .sketch,
+  .desk[data-theme='dream'] .seal,
+  .desk[data-theme='dream'] .leaf.under.forward {
+    animation: none;
+  }
+}

@@ -1,0 +1,135 @@
+/* Pirate: a captain's log written over an old sea chart, on a ship's timber table. */
+
+.desk[data-theme='pirate'] {
+  --ink: #28180a;
+  --ink-soft: #5b3f22;
+  --ink-faint: #8d6b43;
+  --rubric: #7a2413;
+  --desk: #140d07;
+  --desk-image:
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.22) 0 2px, transparent 2px 26px),
+    repeating-linear-gradient(89deg, rgba(255, 200, 140, 0.035) 0 1px, transparent 1px 7px),
+    radial-gradient(ellipse at 50% 40%, rgba(130, 75, 30, 0.5), transparent 70%);
+  --font-body: 'IM Fell DW Pica', 'IM Fell English', Georgia, serif;
+  --font-caps: 'IM Fell English SC', Georgia, serif;
+  --font-display: 'Pirata One', 'IM Fell English SC', Georgia, serif;
+  --font-initial: 'Pirata One', Georgia, serif;
+  --ribbon-a: #1d1d1d;
+  --ribbon-b: #3a3a3a;
+  --ribbon-ink: #e0c795;
+  --sketch-tone: sepia(0.85) contrast(1.2) brightness(0.92);
+  --rose: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200' fill='none' stroke='rgba(90,55,20,0.32)' stroke-width='1.2'%3E %3Ccircle cx='100' cy='100' r='92'/%3E%3Ccircle cx='100' cy='100' r='84'/%3E%3Ccircle cx='100' cy='100' r='30'/%3E %3Cpath d='M100 8 112 88 192 100 112 112 100 192 88 112 8 100 88 88Z' fill='rgba(90,55,20,0.10)'/%3E %3Cpath d='M100 36 106 94 164 100 106 106 100 164 94 106 36 100 94 94Z' transform='rotate(45 100 100)'/%3E %3Cpath d='M100 8v184M8 100h184'/%3E %3Cpath d='M96 4h8l-4-10z' fill='rgba(90,55,20,0.35)'/%3E %3C/svg%3E");
+}
+
+/* A chart: rhumb lines radiating from two compass roses over aged paper. */
+.desk[data-theme='pirate'] .paper,
+.desk[data-theme='pirate'] .leaf.paper,
+.desk.theme-sample[data-theme='pirate'] .paper {
+  background-color: #e4cc9a;
+  background-image:
+    linear-gradient(to right, rgba(60, 35, 10, 0.3), rgba(60, 35, 10, 0.08) 18px, transparent 34px),
+    var(--rose),
+    var(--rose),
+    repeating-conic-gradient(from 0deg at 84% 12%, rgba(90, 55, 20, 0.14) 0deg 0.3deg, transparent 0.3deg 11.25deg),
+    repeating-conic-gradient(from 0deg at 8% 92%, rgba(90, 55, 20, 0.1) 0deg 0.3deg, transparent 0.3deg 22.5deg),
+    radial-gradient(ellipse at 30% 25%, rgba(255, 244, 214, 0.6), transparent 55%),
+    var(--mottle),
+    var(--grain);
+  background-size: auto, 190px 190px, 110px 110px, auto, auto, auto, 900px 900px, 240px 240px;
+  background-position: 0 0, 84% 12%, 8% 92%, 0 0, 0 0, 0 0, 0 0, 0 0;
+  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, repeat, repeat;
+  box-shadow:
+    inset 0 0 90px rgba(80, 40, 5, 0.55),
+    inset 0 0 22px rgba(50, 22, 0, 0.5);
+}
+
+@media (min-width: 700px) {
+  .desk[data-theme='pirate'] .leaf {
+    box-shadow:
+      inset 0 0 90px rgba(80, 40, 5, 0.55),
+      inset 0 0 22px rgba(50, 22, 0, 0.5),
+      0 30px 60px rgba(0, 0, 0, 0.6),
+      0 4px 12px rgba(0, 0, 0, 0.45);
+  }
+}
+
+.desk[data-theme='pirate'] .prose {
+  font-size: clamp(1.16rem, 4.5vw, 1.32rem);
+}
+
+.desk[data-theme='pirate'] .drop-cap {
+  font-size: 4.2em;
+  line-height: 0.8;
+  padding-top: 0.1em;
+}
+
+.desk[data-theme='pirate'] .folio::before,
+.desk[data-theme='pirate'] .folio::after {
+  width: 34px;
+}
+
+.desk[data-theme='pirate'] .fleuron {
+  font-size: 1.4rem;
+  color: var(--ink-soft);
+}
+
+.desk[data-theme='pirate'] .finis-word {
+  font-weight: 400;
+  font-size: 2.1rem;
+  letter-spacing: 0.04em;
+}
+
+/* Waiting: a compass needle hunting for north. */
+.desk[data-theme='pirate'] .quill-wait svg {
+  animation: none;
+}
+
+.desk[data-theme='pirate'] .compass-needle {
+  transform-origin: 32px 32px;
+  animation: hunt 2.2s ease-in-out infinite;
+}
+
+@keyframes hunt {
+  0%,
+  100% {
+    transform: rotate(-40deg);
+  }
+  35% {
+    transform: rotate(30deg);
+  }
+  60% {
+    transform: rotate(-12deg);
+  }
+  80% {
+    transform: rotate(6deg);
+  }
+}
+
+/* ---------- Title page ---------- */
+
+.desk[data-theme='pirate'] .book-title {
+  font-weight: 400;
+  font-size: clamp(2.6rem, 13vw, 3.6rem);
+  letter-spacing: 0.02em;
+}
+
+/* Black wax for a pirate's seal. */
+.desk[data-theme='pirate'] .seal {
+  background:
+    radial-gradient(circle at 36% 30%, rgba(255, 230, 190, 0.28), transparent 38%),
+    radial-gradient(circle at 50% 50%, #2e2a26 0 55%, #1a1715 72%, #0b0a09 100%);
+  box-shadow:
+    0 6px 14px rgba(0, 0, 0, 0.5),
+    inset 0 -4px 10px rgba(0, 0, 0, 0.6),
+    inset 0 3px 6px rgba(255, 230, 190, 0.18);
+  color: #e3cb98;
+  font-weight: 400;
+  font-size: 1.25rem;
+  letter-spacing: 0.02em;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.8);
+}
+
+.desk[data-theme='pirate'] .seal::before {
+  border-color: rgba(0, 0, 0, 0.5);
+  box-shadow: 0 1px 0 rgba(255, 230, 190, 0.15);
+}
