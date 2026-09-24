@@ -1,34 +1,39 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Tales Unwritten
 
-## Getting Started
+A gamebook that writes itself as you read. Pick a hero and a place (or roll the dice), and the opening page is written for you. Each choice says *turn to page 43*; the page turns, and if nobody has been there before, it is written on the spot. Every page is kept, so the next reader who makes the same choice finds the same page, and can branch off somewhere new.
 
-First, run the development server:
+Built for phones first, styled as an old illuminated storybook: parchment, dip-pen type, a red drop cap, words that ink themselves onto the page (tap to read ahead), a simple ink sketch on every page, and pages that turn forward or back depending on where the choice leads.
+
+## Running it
 
 ```bash
+npm install
+cp .env.example .env.local   # add GEMINI_API_KEY, or leave it blank for the mock storyteller
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Without a key, a built-in mock storyteller writes placeholder passages and sketches, so the whole app works offline.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## How it works
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+- **One tree per story.** Pages are numbered 1–400 and handed out at random, like a real gamebook. Page 1 is always the start.
+- **Written once.** The first reader to turn to a page triggers generation; concurrent readers wait for that one write (`StoryService.ensureWritten`, plus an atomic claim in the store).
+- **Written ahead.** When a page is served, the pages behind its choices are generated in the background (`PREFETCH_CHOICES`).
+- **Continuity.** Each story has a *bible* (world, characters, fixed rules). Each page records the facts it establishes or retires, and the model gets only the facts true on *that* branch.
+- **Rules in code.** Page numbers and when a branch must end are decided in code (seeded, reproducible), never by the model.
+- **Models.** Gemini text (`gemini-3.8-flash`) with structured JSON output, and Gemini image (`gemini-3.1-flash-lite-image`) for the sketches. Override with `GEMINI_TEXT_MODEL` / `GEMINI_IMAGE_MODEL`.
 
-## Learn More
+## Tests
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run check      # typecheck, lint, unit tests (Vitest)
+npm run test:e2e   # Playwright on a phone and a desktop viewport, using the mock storyteller
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Storage
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+Stories are kept in memory and written to `.data/`. That suits local play and a single server. Hosting on serverless or several instances needs a database-backed `StoryStore` (for example Postgres or Firestore) and blob storage for sketches.
 
-## Deploy on Vercel
+## History
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+This replaces a 2023 version (Next.js 13, OpenAI, MongoDB) whose commits are kept in this repository's history.
