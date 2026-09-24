@@ -142,7 +142,7 @@ export const PHRASEBOOKS: Record<ThemeId, Phrasebook> = {
       'Ask the crow what it knows',
       'Return to the village for help',
     ],
-    items: ['lantern', 'key', 'door', 'tree', 'scroll', 'stranger'],
+    items: ['lantern', 'key', 'door', 'tree', 'scroll', 'stranger', 'sword', 'crown', 'candle', 'bird'],
   },
   future: {
     titleNouns: ['Silent Signal', 'Last Orbit', 'Glass Moon', 'Ninth Relay', 'Cold Harbor', 'Long Drift'],
@@ -187,7 +187,7 @@ export const PHRASEBOOKS: Record<ThemeId, Phrasebook> = {
       'Follow the drone into the service ducts',
       'Plot a course toward the coordinates',
     ],
-    items: ['planet', 'door', 'key', 'stranger', 'moon'],
+    items: ['planet', 'door', 'key', 'stranger', 'moon', 'eye', 'hourglass', 'compass'],
   },
   noir: {
     titleNouns: ['Long Goodbye', 'Blue Gardenia', 'Last Call', 'Paper Alibi', 'Glass Key', 'Midnight Ledger'],
@@ -232,7 +232,7 @@ export const PHRASEBOOKS: Record<ThemeId, Phrasebook> = {
       'Search her apartment while she sleeps',
       'Take the envelope and walk away',
     ],
-    items: ['stranger', 'key', 'door', 'lantern', 'scroll'],
+    items: ['stranger', 'key', 'door', 'lantern', 'scroll', 'eye', 'goblet', 'hourglass'],
   },
   pirate: {
     titleNouns: ['Black Compass', 'Drowned Crown', 'Ninth Wave', 'Salt Queen', 'Lost Doubloon', 'Siren’s Map'],
@@ -277,7 +277,7 @@ export const PHRASEBOOKS: Record<ThemeId, Phrasebook> = {
       'Climb to the crow’s nest for a better look',
       'Trust the parrot and head for the reef',
     ],
-    items: ['ship', 'lighthouse', 'scroll', 'key', 'lantern'],
+    items: ['ship', 'lighthouse', 'scroll', 'key', 'lantern', 'compass', 'sword', 'goblet', 'bird'],
   },
   ancient: {
     titleNouns: ['Silent Oracle', 'Bronze Bull', 'Ninth Labor', 'Golden Thread', 'Owl’s Bargain', 'Last Nymph'],
@@ -322,7 +322,7 @@ export const PHRASEBOOKS: Record<ThemeId, Phrasebook> = {
       'Challenge the stranger to a riddle',
       'Descend into the labyrinth',
     ],
-    items: ['ship', 'scroll', 'tree', 'moon', 'stranger'],
+    items: ['ship', 'scroll', 'tree', 'moon', 'stranger', 'sword', 'crown', 'goblet', 'mountain', 'eye'],
   },
   dream: {
     titleNouns: ['Glass Tide', 'Other Room', 'Upside Moon', 'Paper Sky', 'Second Shadow', 'Slow Clock'],
@@ -367,6 +367,6 @@ export const PHRASEBOOKS: Record<ThemeId, Phrasebook> = {
       'Ask the moon what time it is',
       'Close your eyes inside the dream',
     ],
-    items: ['moon', 'door', 'key', 'tree', 'stranger'],
+    items: ['moon', 'door', 'key', 'tree', 'stranger', 'eye', 'hourglass', 'bird', 'bridge'],
   },
 }

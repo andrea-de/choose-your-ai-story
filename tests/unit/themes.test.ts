@@ -110,8 +110,8 @@ describe('mock storyteller per theme', () => {
 })
 
 describe('sketch library', () => {
-  it('has ten described sketches with unique ids', () => {
-    expect(SKETCH_LIBRARY).toHaveLength(10)
+  it('has twenty described sketches with unique ids', () => {
+    expect(SKETCH_LIBRARY).toHaveLength(20)
     expect(new Set(sketchIds).size).toBe(sketchIds.length)
     for (const s of SKETCH_LIBRARY) expect(s.description.length).toBeGreaterThan(20)
   })
@@ -130,5 +130,11 @@ describe('sketch library', () => {
     const { pageDraftJsonSchema } = await import('@/lib/story/schema')
     const sketch = (pageDraftJsonSchema as { properties: { sketch: { enum: string[] } } }).properties.sketch
     expect(sketch.enum).toEqual(['none', ...sketchIds])
+  })
+
+  it('has no stray SVG files missing from the catalogue', async () => {
+    const { readdirSync } = await import('node:fs')
+    const files = readdirSync('public/sketches').filter((f) => f.endsWith('.svg')).map((f) => f.replace('.svg', ''))
+    expect(files.sort()).toEqual([...sketchIds].sort())
   })
 })
