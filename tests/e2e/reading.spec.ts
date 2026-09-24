@@ -110,6 +110,7 @@ const themes = [
   { name: 'Noir', id: 'noir', begin: 'Open the Case', folio: 'No. 1', choiceLabel: /see file No\. \d+/ },
   { name: 'Pirate', id: 'pirate', begin: 'Set Sail', folio: '1', choiceLabel: /turn to \d+/ },
   { name: 'Ancient Myth', id: 'ancient', begin: 'Begin', folio: 'I', choiceLabel: /go to [IVXLCDM]+/ },
+  { name: 'Dreamscape', id: 'dream', begin: 'Dream', folio: '1', choiceLabel: /drift to \d+/ },
 ]
 
 for (const t of themes) {
@@ -124,6 +125,9 @@ for (const t of themes) {
     await readAhead(page)
     await expect(page.getByTestId('current-page').locator('.choice').first()).toContainText(t.choiceLabel)
     await expect(page.getByTestId('current-page').locator('.sketch img')).toBeVisible()
+    // Clicking a choice must never scroll the book itself sideways.
+    await page.getByTestId('current-page').locator('.choice').first().focus()
+    await expect(page.locator('.book')).toHaveJSProperty('scrollLeft', 0)
   })
 }
 

@@ -5,8 +5,8 @@ import { newStoryRequestSchema } from '@/lib/story/schema'
 import { allThemes, getTheme, themeIds, toRoman } from '@/lib/themes'
 
 describe('themes', () => {
-  it('offers the five kinds of book', () => {
-    expect(themeIds).toEqual(['historic-fantasy', 'future', 'noir', 'pirate', 'ancient'])
+  it('offers the six kinds of book', () => {
+    expect(themeIds).toEqual(['historic-fantasy', 'future', 'noir', 'pirate', 'ancient', 'dream'])
   })
 
   it('writes Roman numerals', () => {
@@ -39,6 +39,7 @@ describe('themes', () => {
     expect(getTheme('noir').ui.pageLabel(43)).toBe('No. 43')
     expect(getTheme('pirate').ui.pageLabel(43)).toBe('43')
     expect(getTheme('ancient').ui.pageLabel(43)).toBe('XLIII')
+    expect(getTheme('dream').ui.pageLabel(43)).toBe('43')
   })
 
   it('shows symbols as text, not colour emoji', () => {

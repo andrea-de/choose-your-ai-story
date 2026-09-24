@@ -2,7 +2,7 @@
 
 A gamebook that writes itself as you read. Pick a hero and a place (or roll the dice), and the opening page is written for you. Each choice says *turn to page 43*; the page turns, and if nobody has been there before, it is written on the spot. Every page is kept, so the next reader who makes the same choice finds the same page, and can branch off somewhere new.
 
-Built for phones first. Every story is one of five kinds of book, each with its own paper, type, sketch style, page transition and voice:
+Built for phones first. Every story is one of six kinds of book, each with its own paper, type, sketch style, page transition and voice:
 
 | Theme | Look | Choices read | Changing pages |
 |---|---|---|---|
@@ -10,6 +10,7 @@ Built for phones first. Every story is one of five kinds of book, each with its 
 | Future | Dark glass, scanlines, glowing cyan line art, words that decode | jump to LOG 043 | screen flare and shift |
 | Noir | Typed case file, venetian-blind shadows, coffee ring, rubber stamps, sketches as clipped photos | see file No. 43 | top sheet pulled off the pile |
 | Pirate | Captain's log over a sea chart with rhumb lines and compass roses | turn to 43 | 3D page turn |
+| Dreamscape | A twilight sky with a slowly drifting aurora behind sheer pages, iridescent headings, glowing sketches over their own reflection | drift to 43 | the page dissolves as the next comes into focus |
 | Ancient myth | Papyrus framed by a Greek key, carved initials, sketches painted in a terracotta disc like black-figure pottery | go to XLIII | the scroll rolls up, or unrolls back |
 
 Words appear as they would be read (tap to read ahead), and a simple sketch appears on every page.

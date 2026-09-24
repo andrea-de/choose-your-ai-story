@@ -54,6 +54,16 @@ function WaitIcon({ theme }: { theme: ThemeId }) {
           <path d="M22 40l-6 18M42 40l6 18M32 42v16" />
         </svg>
       )
+    case 'dream':
+      return (
+        <svg {...common}>
+          <path
+            className="dream-spiral"
+            d="M32 32c0-2 3-3 4-1s-1 6-4 6-7-3-6-8 7-9 12-7 10 8 8 14-10 12-17 10-13-11-11-18 11-14 19-13 16 8 16 17"
+          />
+          <path d="M50 10a8 8 0 1 0 6 12 6 6 0 1 1-6-12z" fill="currentColor" stroke="none" opacity="0.8" />
+        </svg>
+      )
     default:
       return (
         <>

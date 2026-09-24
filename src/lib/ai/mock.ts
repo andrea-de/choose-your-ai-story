@@ -319,6 +319,51 @@ export const PHRASEBOOKS: Record<ThemeId, Phrasebook> = {
     ],
     items: ['an amphora', 'an owl', 'a lyre', 'a helmet', 'a ship'],
   },
+  dream: {
+    titleNouns: ['Glass Tide', 'Other Room', 'Upside Moon', 'Paper Sky', 'Second Shadow', 'Slow Clock'],
+    titlePlaces: ['Nowhere-in-Particular', 'the Hollow Hour', 'Lantern Street', 'the Mirror Sea', 'Tuesday’s Edge'],
+    premiseHook: 'The clocks have all agreed to stop at the same minute, and only you are still moving.',
+    names: ['the Woman Made of Moths', 'your reflection', 'Mr. Almost', 'the Conductor', 'Wren, who is sometimes a bird', 'the Keeper of Lost Umbrellas'],
+    rules: ['Mirrors show what could have been, never what is.', 'Anything forgotten here stays forgotten when you wake.'],
+    openings: [
+      'You are standing in a corridor you have never seen, and you know it perfectly.',
+      'The rain is falling upward tonight, and nobody seems to mind.',
+      'A door opens in the middle of the field, and warm light spills out onto the grass.',
+    ],
+    transitions: [
+      'The room quietly rearranges itself behind your back.',
+      'The floor becomes water, then floor again, as if it changed its mind.',
+      'Somewhere a music box plays a song you almost remember.',
+    ],
+    details: [
+      'The wallpaper is covered in tiny doors, and one of them is slightly open.',
+      'The moon hangs low enough to touch, and it hums like a struck glass.',
+      'Your footsteps arrive a moment after you do.',
+      'Every clock in the house shows a different, very certain time.',
+      'The air smells of oranges and old books, and tastes faintly of blue.',
+      'In the window, your reflection waves, though you did not.',
+    ],
+    hooks: [
+      'Then your reflection steps out of the mirror and asks if you are ready to swap.',
+      'A staircase unfolds from the ceiling, leading somewhere upside down.',
+      'The train whistles once, and a ticket with your name on it drifts into your hand.',
+    ],
+    endings: [
+      'The dream loosens like a ribbon, and you wake with a feather still in your hand.',
+      'You step through the last door and find your own bed, warm, as if you never left.',
+      'The world folds gently closed, and somewhere, a version of you keeps dreaming on.',
+    ],
+    endingTitles: ['Waking Softly', 'The Other You', 'Morning Light', 'Still Dreaming'],
+    choices: [
+      'Step through the open door',
+      'Follow your reflection into the glass',
+      'Climb the upside-down staircase',
+      'Board the midnight train',
+      'Ask the moon what time it is',
+      'Close your eyes inside the dream',
+    ],
+    items: ['a door', 'a moon', 'a mirror', 'a staircase', 'a feather'],
+  },
 }
 
 const stroke = 'fill="none" stroke="#1b1206" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"'
@@ -397,6 +442,22 @@ export const SKETCHES: Record<string, string> = {
   helmet: svg(
     '<path d="M60 150V96c0-36 80-36 80 0v54"/><path d="M60 150h24v-34h-10v-14h52v14h-10v34h24"/><path d="M100 102v40"/>' +
       '<path d="M60 70c20-40 60-40 80 0"/><path d="M58 70c14-24 70-24 84 0" stroke-dasharray="3 6"/>',
+  ),
+  door: svg(
+    '<path d="M76 150V56h48v94"/><path d="M76 56l20-8v110l-20-8"/><circle cx="90" cy="104" r="2.5"/>' +
+      '<path d="M100 60h20M104 150c10 6 30 10 44 8M52 168c16-6 34-8 48-6"/><path d="M40 60c8-4 14 0 18 4M150 40c6-2 12 2 12 6"/>',
+  ),
+  moon: svg(
+    '<path d="M122 40a62 62 0 1 0 0 120 48 48 0 1 1 0-120z"/><path d="M150 56l3 8 8 3-8 3-3 8-3-8-8-3 8-3z"/>' +
+      '<path d="M160 120l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/><path d="M100 170v14M94 182c4 4 8 4 12 0"/>',
+  ),
+  mirror: svg(
+    '<ellipse cx="100" cy="92" rx="38" ry="54"/><ellipse cx="100" cy="92" rx="30" ry="46"/><path d="M100 146v24M78 176h44"/>' +
+      '<path d="M90 70c6-8 14-10 20-6M86 100c2 10 8 18 16 20" stroke-dasharray="4 6"/>',
+  ),
+  staircase: svg(
+    '<path d="M40 150h24v-20h24v-20h24V90h24V70h24"/><path d="M40 150l20-12h24v-20h24V98h24V78h24l-20-8"/>' +
+      '<path d="M160 70v-20h-24M40 150v20"/><circle cx="150" cy="40" r="3"/>',
   ),
   compass: svg(
     '<circle cx="100" cy="100" r="60"/><circle cx="100" cy="100" r="50"/><path d="M100 36l10 54 54 10-54 10-10 54-10-54-54-10 54-10z"/>' +

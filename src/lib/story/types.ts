@@ -1,4 +1,4 @@
-export type ThemeId = 'historic-fantasy' | 'future' | 'noir' | 'pirate' | 'ancient'
+export type ThemeId = 'historic-fantasy' | 'future' | 'noir' | 'pirate' | 'ancient' | 'dream'
 
 /** What the reader picked (or the dice rolled) on the opening screen. */
 export interface StoryConfig {

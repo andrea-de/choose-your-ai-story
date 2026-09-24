@@ -352,12 +352,72 @@ export const ancient: Theme = {
   },
 }
 
+export const dream: Theme = {
+  id: 'dream',
+  name: 'Dreamscape',
+  tagline: 'Dreams, illusions and other selves',
+  narration:
+    'Write like a vivid dream remembered on waking: second person, present tense, soft and strange. ' +
+    'Places shift and rooms are bigger inside; senses blur (you hear colours, taste music); reflections ' +
+    'and other versions of you have their own ideas. Keep dream logic consistent with the facts established, ' +
+    'so choices still matter. Uncanny rather than frightening. Family-friendly.',
+  illustration:
+    'Delicate surrealist fine-line drawing of a single impossible or dreamlike object (a door standing alone ' +
+    'in open sky, a staircase folding into itself): thin black lines on a pure white background, no color, ' +
+    'no shading fills, no text or lettering. Centered, with plenty of empty space around it.',
+  heroes: [
+    'a sleepwalker who never wakes in the same bed',
+    'a stage magician whose tricks have started working',
+    'a child who can hear colours',
+    'a mirror-maker who sees someone else in the glass',
+    'a cartographer of dreams',
+    'someone who remembers a life they never lived',
+    'the last passenger on a midnight train',
+    'a lighthouse keeper whose light shines into other worlds',
+  ],
+  settings: [
+    'a library where the books rewrite themselves',
+    'a city built on the back of a sleeping whale',
+    'a hall of mirrors with one reflection missing',
+    'a staircase that only goes down',
+    'a train that stops at yesterday',
+    'a garden where it is always three in the morning',
+    'an ocean of clouds under a violet sun',
+    'your childhood home, but bigger on the inside',
+  ],
+  tones: ['wondrous', 'uncanny', 'tender', 'dizzying', 'whimsical'],
+  ui: {
+    turnTo: 'drift to',
+    pageLabel: plain,
+    finis: 'And Then You Wake',
+    unwritten: 'no one has dreamed this yet',
+    waiting: 'The dream is shifting…',
+    tapHint: 'tap to remember it all',
+    goBack: 'Slip back into the dream',
+    beginAgain: 'Dream it again',
+    anotherBook: 'Choose another dream',
+    toLibrary: 'wake in the library',
+    firstToEnd: 'No one has woken here before',
+    foundBy: (n) => `${n} dreamers have woken here`,
+    heroLabel: 'You dream you are',
+    settingLabel: 'Adrift in',
+    toneLabel: 'And the dream is',
+    begin: 'Dream',
+    roll: 'Shuffle fate',
+    binding: 'Falling asleep…',
+    fleuron: '✧',
+    endMark: '☾',
+    pace: 125,
+  },
+}
+
 const themes: Record<ThemeId, Theme> = {
   'historic-fantasy': historicFantasy,
   future,
   noir,
   pirate,
   ancient,
+  dream,
 }
 
 export function getTheme(id: ThemeId): Theme {
