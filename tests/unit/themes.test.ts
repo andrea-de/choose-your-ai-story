@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { existsSync, readFileSync } from 'node:fs'
 import { MockStoryTeller, PHRASEBOOKS } from '@/lib/ai/mock'
-import { SKETCH_LIBRARY, sketchIds } from '@/lib/sketches'
+import { SKETCH_LIBRARY, sketchIds, sketchesFor } from '@/lib/sketches'
 import { pagePrompt } from '@/lib/story/prompts'
 import { newStoryRequestSchema } from '@/lib/story/schema'
 import { allThemes, getTheme, themeIds, toRoman } from '@/lib/themes'
@@ -80,9 +80,10 @@ describe('themes', () => {
 })
 
 describe('mock storyteller per theme', () => {
-  it('only names sketches that exist in the library', () => {
+  it('only names sketches offered to its own theme', () => {
     for (const [id, book] of Object.entries(PHRASEBOOKS)) {
-      for (const item of book.items) expect(sketchIds, `${id}: ${item}`).toContain(item)
+      const offered = sketchesFor(id as never).map((s) => s.id)
+      for (const item of book.items) expect(offered, `${id}: ${item}`).toContain(item)
     }
   })
 
@@ -110,8 +111,8 @@ describe('mock storyteller per theme', () => {
 })
 
 describe('sketch library', () => {
-  it('has twenty described sketches with unique ids', () => {
-    expect(SKETCH_LIBRARY).toHaveLength(20)
+  it('has sixty described sketches with unique ids', () => {
+    expect(SKETCH_LIBRARY).toHaveLength(60)
     expect(new Set(sketchIds).size).toBe(sketchIds.length)
     for (const s of SKETCH_LIBRARY) expect(s.description.length).toBeGreaterThan(20)
   })
@@ -130,6 +131,30 @@ describe('sketch library', () => {
     const { pageDraftJsonSchema } = await import('@/lib/story/schema')
     const sketch = (pageDraftJsonSchema as { properties: { sketch: { enum: string[] } } }).properties.sketch
     expect(sketch.enum).toEqual(['none', ...sketchIds])
+  })
+
+  it.each(themeIds)('offers %s a shared core plus its own sketches', (theme) => {
+    const offered = sketchesFor(theme)
+    const own = offered.filter((s) => s.themes)
+    expect(offered.length).toBeGreaterThanOrEqual(35)
+    expect(offered.length).toBeLessThan(SKETCH_LIBRARY.length)
+    expect(own.length).toBeGreaterThanOrEqual(4)
+    for (const s of own) expect(s.themes).toContain(theme)
+  })
+
+  it('keeps sketches out of stories they do not suit', () => {
+    const ids = (t: Parameters<typeof sketchesFor>[0]) => sketchesFor(t).map((s) => s.id)
+    expect(ids('pirate')).not.toContain('robot')
+    expect(ids('future')).not.toContain('castle')
+    expect(ids('noir')).not.toContain('dragon')
+    expect(ids('ancient')).toContain('temple')
+    for (const t of themeIds) expect(ids(t)).toContain('door')
+  })
+
+  it('only tags sketches with real themes', () => {
+    for (const s of SKETCH_LIBRARY as readonly { themes?: readonly string[] }[]) {
+      for (const t of s.themes ?? []) expect(themeIds).toContain(t)
+    }
   })
 
   it('has no stray SVG files missing from the catalogue', async () => {

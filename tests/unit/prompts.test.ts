@@ -75,6 +75,12 @@ describe('pagePrompt', () => {
     expect(pagePrompt(base)).not.toContain('The previous page showed')
   })
 
+  it('offers only the sketches that suit the story’s theme', () => {
+    const prompt = pagePrompt(base)
+    expect(prompt).toContain('- castle:')
+    expect(prompt).not.toContain('- robot:')
+  })
+
   it('raises the stakes near the end', () => {
     expect(pagePrompt({ ...base, depth: 6 })).toContain('nearing its end')
     expect(pagePrompt({ ...base, depth: 2 })).not.toContain('nearing its end')

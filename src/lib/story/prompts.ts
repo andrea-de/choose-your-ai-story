@@ -1,4 +1,4 @@
-import { SKETCH_LIBRARY } from '../sketches'
+import { sketchesFor } from '../sketches'
 import type { Theme } from '../themes'
 import type { Fact, StoryBible, StoryConfig } from './types'
 
@@ -87,7 +87,7 @@ export function pagePrompt(req: PageRequest): string {
     'For sketch, pick the drawing below that best matches something on this page, or "none" if nothing fits.' +
       (req.previousSketch ? ` The previous page showed "${req.previousSketch}"; prefer a different one if another fits.` : '') +
       '\n' +
-      SKETCH_LIBRARY.map((s) => `- ${s.id}: ${s.description}`).join('\n'),
+      sketchesFor(req.theme.id).map((s) => `- ${s.id}: ${s.description}`).join('\n'),
   )
 
   sections.push(
