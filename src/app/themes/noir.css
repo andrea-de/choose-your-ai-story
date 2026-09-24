@@ -1,0 +1,342 @@
+/* Noir: a typed case file under venetian-blind light, rain and neon outside. */
+
+.desk[data-theme='noir'] {
+  --ink: #1c1b1d;
+  --ink-soft: #4a4946;
+  --ink-faint: #8a867d;
+  --rubric: #a41d1d;
+  --desk: #0b0f13;
+  --desk-image:
+    repeating-linear-gradient(100deg, rgba(255, 255, 255, 0.03) 0 1px, transparent 1px 11px),
+    radial-gradient(ellipse at 12% 18%, rgba(255, 50, 110, 0.22), transparent 45%),
+    radial-gradient(ellipse at 88% 82%, rgba(40, 200, 220, 0.14), transparent 50%);
+  --font-body: 'Courier Prime', 'Courier New', monospace;
+  --font-caps: 'Special Elite', 'Courier Prime', monospace;
+  --font-display: 'Limelight', 'Special Elite', serif;
+  --page-glow: rgba(255, 255, 255, 0.06);
+  --page-shadow-edge: rgba(0, 0, 0, 0.35);
+  --under-shadow: rgba(0, 0, 0, 0.4);
+  --ribbon-a: #26262a;
+  --ribbon-b: #48484e;
+  --ribbon-ink: #ece6d8;
+  --sketch-blend: multiply;
+  --sketch-tone: grayscale(1) contrast(1.4);
+  --sketch-opacity: 0.92;
+}
+
+.desk[data-theme='noir'] .book {
+  perspective: none;
+}
+
+.desk[data-theme='noir'] .paper,
+.desk[data-theme='noir'] .leaf.paper,
+.desk.theme-sample[data-theme='noir'] .paper {
+  background-color: #ebe6d9;
+  background-image:
+    repeating-linear-gradient(-14deg, transparent 0 52px, rgba(15, 18, 28, 0.075) 52px 88px),
+    radial-gradient(circle at 86% 90%, transparent 0 40px, rgba(110, 70, 30, 0.24) 41px 43px, rgba(110, 70, 30, 0.08) 44px 47px, transparent 48px),
+    radial-gradient(ellipse at 20% 10%, rgba(255, 255, 255, 0.5), transparent 55%),
+    var(--grain);
+  background-size: auto, auto, auto, 240px 240px;
+  box-shadow:
+    inset 0 0 60px rgba(40, 35, 25, 0.32),
+    inset 0 0 8px rgba(40, 35, 25, 0.25);
+}
+
+@media (min-width: 700px) {
+  .desk[data-theme='noir'] .leaf {
+    border-radius: 2px;
+    box-shadow:
+      inset 0 0 60px rgba(40, 35, 25, 0.32),
+      0 30px 60px rgba(0, 0, 0, 0.7),
+      0 4px 12px rgba(0, 0, 0, 0.5);
+  }
+}
+
+.desk[data-theme='noir'] .prose {
+  font-size: clamp(1.02rem, 4.1vw, 1.14rem);
+  line-height: 1.7;
+  hyphens: manual;
+}
+
+.desk[data-theme='noir'] .prose p + p {
+  text-indent: 0;
+}
+
+.desk[data-theme='noir'] .drop-cap {
+  float: none;
+  font: inherit;
+  color: inherit;
+  padding: 0;
+  margin: 0;
+  line-height: inherit;
+  text-shadow: none;
+}
+
+/* Typewriter: each word strikes the page at once, with uneven ink. */
+.desk[data-theme='noir'] .word {
+  filter: none;
+  animation-name: type-strike;
+  animation-duration: 90ms;
+  animation-timing-function: steps(1, end);
+}
+
+.desk[data-theme='noir'] .drop-cap.word,
+.desk[data-theme='noir'] .revealed .word {
+  animation-name: type-strike;
+}
+
+.desk[data-theme='noir'] .word:nth-child(7n + 3) {
+  --word-ink: #2e2d2b;
+}
+
+.desk[data-theme='noir'] .word:nth-child(11n + 5) {
+  --word-ink: #252423;
+}
+
+@keyframes type-strike {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+    color: var(--word-ink, var(--ink));
+  }
+}
+
+/* The page number is a rubber stamp. */
+.desk[data-theme='noir'] .folio {
+  font-family: var(--font-caps);
+  color: var(--rubric);
+  border: 2px solid currentColor;
+  border-radius: 3px;
+  padding: 0.15rem 0.7rem;
+  width: max-content;
+  margin: 0.2rem auto 1.4rem;
+  transform: rotate(-3deg);
+  opacity: 0.82;
+  font-size: 1.1rem;
+  letter-spacing: 0.14em;
+}
+
+.desk[data-theme='noir'] .folio::before,
+.desk[data-theme='noir'] .folio::after {
+  display: none;
+}
+
+.desk[data-theme='noir'] .story-title {
+  font-family: var(--font-caps);
+  letter-spacing: 0.2em;
+  color: var(--ink-soft);
+}
+
+/* The sketch is a photograph clipped into the file. */
+.desk[data-theme='noir'] .sketch {
+  width: min(58%, 230px);
+  background: #f6f4ee;
+  padding: 10px 10px 30px;
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.32),
+    0 1px 2px rgba(0, 0, 0, 0.3);
+  transform: rotate(-2.5deg);
+  margin: 0.4rem auto 1.4rem;
+  aspect-ratio: auto;
+}
+
+.desk[data-theme='noir'] .sketch::before {
+  content: '';
+  position: absolute;
+  top: -14px;
+  left: 28px;
+  width: 16px;
+  height: 44px;
+  border: 2px solid #8d8f94;
+  border-radius: 8px;
+  z-index: 1;
+}
+
+.desk[data-theme='noir'] .sketch img {
+  aspect-ratio: 1;
+  height: auto;
+  display: block;
+}
+
+.desk[data-theme='noir'] .fleuron {
+  font-family: var(--font-caps);
+  font-size: 1rem;
+  letter-spacing: 0.3em;
+  color: var(--ink-faint);
+}
+
+.desk[data-theme='noir'] .choice-text {
+  font-size: 1.05rem;
+}
+
+.desk[data-theme='noir'] .choice-turn {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.88rem;
+}
+
+.desk[data-theme='noir'] .choice-turn .page-no {
+  font-size: 1.1rem;
+}
+
+.desk[data-theme='noir'] .choice-unwritten {
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* Changing files: the top sheet is pulled up and off the pile. */
+.desk[data-theme='noir'] .leaf {
+  transform-origin: center;
+}
+
+.desk[data-theme='noir'] .leaf.turning.forward {
+  animation-name: file-out;
+  animation-duration: 620ms;
+}
+
+.desk[data-theme='noir'] .leaf.turning.backward {
+  animation-name: file-in;
+  animation-duration: 620ms;
+}
+
+.desk[data-theme='noir'] .leaf.turning::after {
+  background: none;
+}
+
+@keyframes file-out {
+  to {
+    transform: translate(-8%, -108%) rotate(-7deg);
+  }
+}
+
+@keyframes file-in {
+  from {
+    transform: translate(-8%, -108%) rotate(-7deg);
+  }
+  to {
+    transform: none;
+  }
+}
+
+/* Waiting: a typewriter cursor. */
+.desk[data-theme='noir'] .quill-wait svg {
+  animation: none;
+}
+
+.desk[data-theme='noir'] .type-cursor {
+  animation: blink 900ms steps(1) infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.desk[data-theme='noir'] .quill-wait p {
+  font-style: normal;
+}
+
+.desk[data-theme='noir'] .tap-hint {
+  font-family: var(--font-caps);
+}
+
+/* Case closed: a big red stamp. */
+.desk[data-theme='noir'] .finis-word {
+  display: inline-block;
+  font-family: var(--font-caps);
+  font-weight: 400;
+  text-transform: uppercase;
+  font-size: 1.6rem;
+  letter-spacing: 0.16em;
+  border: 3px double currentColor;
+  padding: 0.2rem 0.9rem;
+  transform: rotate(-6deg);
+  opacity: 0.85;
+  margin-bottom: 0.6rem;
+}
+
+.desk[data-theme='noir'] .finis-note {
+  font-size: 0.82rem;
+}
+
+/* ---------- Title page ---------- */
+
+.desk[data-theme='noir'] .book-title {
+  font-weight: 400;
+  font-size: clamp(2.2rem, 11vw, 3.2rem);
+  letter-spacing: 0.04em;
+}
+
+.desk[data-theme='noir'] .section-heading {
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-size: 0.9rem;
+}
+
+.desk[data-theme='noir'] .config-row label {
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+}
+
+.desk[data-theme='noir'] .config-input {
+  font-size: 1.06rem;
+}
+
+.desk[data-theme='noir'] .tone {
+  border-radius: 2px;
+  font-size: 0.95rem;
+}
+
+.desk[data-theme='noir'] .dice-button {
+  text-transform: uppercase;
+}
+
+/* A rubber stamp in place of the wax seal. */
+.desk[data-theme='noir'] .seal {
+  width: auto;
+  height: auto;
+  padding: 0.7rem 1.1rem;
+  border-radius: 4px;
+  background: transparent;
+  border: 3px solid var(--rubric);
+  box-shadow: inset 0 0 0 2px transparent;
+  color: var(--rubric);
+  font-family: var(--font-caps);
+  font-weight: 400;
+  font-size: 1.05rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-shadow: none;
+  transform: rotate(-5deg);
+  opacity: 0.9;
+}
+
+.desk[data-theme='noir'] .seal::before {
+  inset: 3px;
+  border-radius: 2px;
+  border: 1px solid var(--rubric);
+  box-shadow: none;
+}
+
+.desk[data-theme='noir'] .seal:active {
+  transform: rotate(-5deg) scale(0.94);
+}
+
+.desk[data-theme='noir'] .contents-line {
+  font-size: 1.02rem;
+}
+
+.desk[data-theme='noir'] .colophon,
+.desk[data-theme='noir'] .contents-line .count {
+  text-transform: uppercase;
+}
+
+.theme-sample[data-theme='noir'] .theme-sample-name,
+.theme-sample[data-theme='pirate'] .theme-sample-name {
+  font-weight: 400;
+  font-size: 1.25rem;
+}

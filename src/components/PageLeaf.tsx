@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
-import type { PageView } from '@/lib/story/types'
+import { getTheme, type ThemeUi } from '@/lib/themes'
+import type { PageView, ThemeId } from '@/lib/story/types'
 import { QuillWait } from './Quill'
 import { RevealText } from './RevealText'
 import { Sketch } from './Sketch'
@@ -15,6 +16,7 @@ export type LeafState =
 interface PageLeafProps {
   storyId: string
   storyTitle: string
+  theme: ThemeId
   number: number
   state: LeafState
   alreadyRead: boolean
@@ -23,17 +25,26 @@ interface PageLeafProps {
   onRead: (page: number) => void
 }
 
-const PACE_MS = 120
-
 /** The contents of one page of the book. */
-export function PageLeaf({ storyId, storyTitle, number, state, alreadyRead, onChoose, onRetry, onRead }: PageLeafProps) {
+export function PageLeaf({
+  storyId,
+  storyTitle,
+  theme,
+  number,
+  state,
+  alreadyRead,
+  onChoose,
+  onRetry,
+  onRead,
+}: PageLeafProps) {
+  const { ui } = getTheme(theme)
   return (
     <div className="leaf-inner">
       <p className="story-title">{storyTitle}</p>
       <p className="folio" aria-label={`Page ${number}`}>
-        {number}
+        {ui.pageLabel(number)}
       </p>
-      {state.kind === 'loading' && <QuillWait message="The ink is still wet on this page…" />}
+      {state.kind === 'loading' && <QuillWait message={ui.waiting} theme={theme} />}
       {state.kind === 'error' && (
         <div className="quill-wait">
           <p>{state.message}</p>
@@ -48,6 +59,7 @@ export function PageLeaf({ storyId, storyTitle, number, state, alreadyRead, onCh
         <WrittenPage
           key={state.page.number}
           storyId={storyId}
+          ui={ui}
           page={state.page}
           alreadyRead={alreadyRead}
           onChoose={onChoose}
@@ -60,12 +72,14 @@ export function PageLeaf({ storyId, storyTitle, number, state, alreadyRead, onCh
 
 function WrittenPage({
   storyId,
+  ui,
   page,
   alreadyRead,
   onChoose,
   onRead,
 }: {
   storyId: string
+  ui: ThemeUi
   page: PageView
   alreadyRead: boolean
   onChoose: (page: number) => void
@@ -80,7 +94,7 @@ function WrittenPage({
   const sketch = page.hasIllustration ? (
     <Sketch
       src={`/api/stories/${storyId}/pages/${page.number}/illustration`}
-      appearAfter={revealed ? 0 : firstParagraphWords * PACE_MS}
+      appearAfter={revealed ? 0 : firstParagraphWords * ui.pace}
     />
   ) : null
 
@@ -94,29 +108,29 @@ function WrittenPage({
         <RevealText
           text={text}
           revealed={revealed}
-          pace={PACE_MS}
+          pace={ui.pace}
           insertAfter={sketch ? { index: 0, node: sketch } : undefined}
           onDone={() => {
             setDone(true)
             onRead(page.number)
           }}
         />
-        {!revealed && !done && <p className="tap-hint">tap to read ahead</p>}
+        {!revealed && !done && <p className="tap-hint">{ui.tapHint}</p>}
       </div>
 
       {done && !page.isEnding && (
         <nav aria-label="Choices">
           <div className="fleuron" aria-hidden>
-            ❦
+            {ui.fleuron}
           </div>
           <ul className="choices choices-enter">
             {page.choices?.map((choice) => (
               <li key={choice.page}>
-                <button type="button" className="choice" onClick={() => onChoose(choice.page)}>
+                <button type="button" className="choice" data-target={choice.page} onClick={() => onChoose(choice.page)}>
                   <span className="choice-text">{choice.text}</span>
                   <span className="choice-turn">
-                    {!choice.explored && <span className="choice-unwritten">no one has gone this way</span>}
-                    turn to <span className="page-no">{choice.page}</span>
+                    {!choice.explored && <span className="choice-unwritten">{ui.unwritten}</span>}
+                    {ui.turnTo} <span className="page-no">{ui.pageLabel(choice.page)}</span>
                   </span>
                 </button>
               </li>
@@ -128,31 +142,29 @@ function WrittenPage({
       {done && page.isEnding && (
         <section className="finis choices-enter" aria-label="The end">
           <div className="fleuron" aria-hidden>
-            ✠
+            {ui.endMark}
           </div>
-          <p className="finis-word">Finis</p>
+          <p className="finis-word">{ui.finis}</p>
           <p className="finis-title">{page.endingTitle}</p>
-          <p className="finis-note">
-            {page.visits <= 1 ? 'You are the first to find this ending' : `Found by ${page.visits} readers`}
-          </p>
+          <p className="finis-note">{page.visits <= 1 ? ui.firstToEnd : ui.foundBy(page.visits)}</p>
           <div className="finis-actions">
             {page.parent !== null && (
               <button type="button" className="choice" onClick={() => onChoose(page.parent!)}>
-                <span className="choice-text">Go back and choose differently</span>
+                <span className="choice-text">{ui.goBack}</span>
                 <span className="choice-turn">
-                  turn to <span className="page-no">{page.parent}</span>
+                  {ui.turnTo} <span className="page-no">{ui.pageLabel(page.parent)}</span>
                 </span>
               </button>
             )}
             <button type="button" className="choice" onClick={() => onChoose(1)}>
-              <span className="choice-text">Begin the tale again</span>
+              <span className="choice-text">{ui.beginAgain}</span>
               <span className="choice-turn">
-                turn to <span className="page-no">1</span>
+                {ui.turnTo} <span className="page-no">{ui.pageLabel(1)}</span>
               </span>
             </button>
             <Link href="/" className="choice">
-              <span className="choice-text">Choose another book</span>
-              <span className="choice-turn">return to the library</span>
+              <span className="choice-text">{ui.anotherBook}</span>
+              <span className="choice-turn">{ui.toLibrary}</span>
             </Link>
           </div>
         </section>

@@ -1,4 +1,5 @@
-:root {
+:root,
+.desk[data-theme='historic-fantasy'] {
   --ink: #2a1c0c;
   --ink-soft: #5a4327;
   --ink-faint: #8a7050;
@@ -6,6 +7,13 @@
   --parchment: #efdfbc;
   --parchment-light: #f8eed6;
   --desk: #1f150d;
+  --desk-image: radial-gradient(ellipse at 50% 40%, rgba(90, 58, 30, 0.55), transparent 70%), var(--grain);
+  --page-glow: rgba(255, 245, 220, 0.12);
+  --page-shadow-edge: rgba(40, 22, 5, 0.45);
+  --under-shadow: rgba(30, 16, 4, 0.35);
+  --ribbon-a: #6f1c10;
+  --ribbon-b: #9b2d18;
+  --ribbon-ink: #f5dcae;
 
   --font-body: 'IM Fell English', 'Iowan Old Style', Georgia, serif;
   --font-caps: 'IM Fell English SC', 'IM Fell English', Georgia, serif;
@@ -31,10 +39,7 @@ body {
 }
 
 body {
-  background-color: var(--desk);
-  background-image:
-    radial-gradient(ellipse at 50% 40%, rgba(90, 58, 30, 0.55), transparent 70%),
-    var(--grain);
+  background: #0d0a07;
   color: var(--ink);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
@@ -57,9 +62,21 @@ a {
   border-radius: 2px;
 }
 
+/* The surface the book lies on; each theme restyles it. */
+.desk {
+  min-height: 100dvh;
+  overflow: hidden;
+  color: var(--ink);
+  font-family: var(--font-body);
+  background-color: var(--desk);
+  background-image: var(--desk-image);
+  background-size: var(--desk-size, auto);
+}
+
 /* ---------- The page itself ---------- */
 
-.parchment {
+.paper,
+.desk.theme-sample[data-theme='historic-fantasy'] .paper {
   background-color: var(--parchment);
   background-image:
     radial-gradient(ellipse at 30% 20%, rgba(255, 250, 232, 0.75), transparent 55%),
@@ -112,7 +129,7 @@ a {
 }
 
 /* Binding shadow along the spine. */
-.leaf.parchment {
+.leaf.paper {
   background-image:
     linear-gradient(to right, rgba(60, 35, 10, 0.3), rgba(60, 35, 10, 0.08) 18px, transparent 34px),
     radial-gradient(ellipse at 30% 20%, rgba(255, 250, 232, 0.75), transparent 55%),
@@ -152,7 +169,7 @@ a {
   content: '';
   position: fixed;
   inset: 0;
-  background: linear-gradient(to left, rgba(40, 22, 5, 0.45), rgba(255, 245, 220, 0.12) 40%, transparent 70%);
+  background: linear-gradient(to left, var(--page-shadow-edge), var(--page-glow) 40%, transparent 70%);
   animation: var(--turn-ms) ease forwards;
   pointer-events: none;
 }
@@ -173,7 +190,7 @@ a {
   content: '';
   position: fixed;
   inset: 0;
-  background: rgba(30, 16, 4, 0.35);
+  background: var(--under-shadow);
   animation: var(--turn-ms) ease forwards;
   pointer-events: none;
 }
@@ -378,9 +395,10 @@ a {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  mix-blend-mode: multiply;
-  filter: url(#ink-wobble) sepia(0.55) contrast(1.15) brightness(0.96);
-  opacity: 0.88;
+  mix-blend-mode: var(--sketch-blend, multiply);
+  /* url() must stay in the rule: inside a custom property it would resolve against the stylesheet's URL. */
+  filter: url(#ink-wobble) var(--sketch-tone, sepia(0.55) contrast(1.15) brightness(0.96));
+  opacity: var(--sketch-opacity, 0.88);
   clip-path: inset(0 100% 0 0);
   animation: draw-in 1800ms ease-out forwards;
 }
@@ -446,14 +464,14 @@ a {
   padding: 0.75rem 0.25rem;
   min-height: 56px;
   cursor: pointer;
-  border-bottom: 1px solid rgba(90, 67, 39, 0.2);
+  border-bottom: 1px solid color-mix(in srgb, var(--ink-soft) 22%, transparent);
   text-decoration: none;
   transition: background-color 200ms ease;
 }
 
 .choice:hover,
 .choice:active {
-  background-color: rgba(142, 42, 23, 0.06);
+  background-color: color-mix(in srgb, var(--rubric) 8%, transparent);
 }
 
 .choice-text {
@@ -606,10 +624,10 @@ a {
   display: grid;
   place-items: center;
   padding-top: 10px;
-  background: linear-gradient(to right, #6f1c10, #9b2d18 45%, #7a2012);
+  background: linear-gradient(to right, var(--ribbon-a), var(--ribbon-b) 45%, var(--ribbon-a));
   clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
-  color: #f5dcae;
+  color: var(--ribbon-ink);
   text-decoration: none;
   font-family: var(--font-caps);
   font-size: 0.72rem;
@@ -685,7 +703,7 @@ a {
   width: 100%;
   background: transparent;
   border: none;
-  border-bottom: 1px solid rgba(90, 67, 39, 0.45);
+  border-bottom: 1px solid color-mix(in srgb, var(--ink-soft) 50%, transparent);
   font-family: var(--font-body);
   font-style: italic;
   font-size: 1.18rem;
@@ -716,7 +734,7 @@ a {
 }
 
 .icon-button:active {
-  background: rgba(142, 42, 23, 0.08);
+  background: color-mix(in srgb, var(--rubric) 10%, transparent);
 }
 
 .tones {
@@ -728,7 +746,7 @@ a {
 
 .tone {
   background: none;
-  border: 1px solid rgba(90, 67, 39, 0.35);
+  border: 1px solid color-mix(in srgb, var(--ink-soft) 40%, transparent);
   border-radius: 999px;
   padding: 0.35rem 0.85rem;
   font-style: italic;
@@ -739,7 +757,7 @@ a {
 
 .tone[aria-pressed='true'] {
   border-color: var(--rubric);
-  background: rgba(142, 42, 23, 0.1);
+  background: color-mix(in srgb, var(--rubric) 12%, transparent);
   color: var(--rubric);
 }
 
@@ -849,7 +867,7 @@ a {
 }
 
 .contents li {
-  border-bottom: 1px solid rgba(90, 67, 39, 0.18);
+  border-bottom: 1px solid color-mix(in srgb, var(--ink-soft) 20%, transparent);
 }
 
 .contents a {
@@ -867,7 +885,7 @@ a {
 
 .contents-line .leader {
   flex: 1;
-  border-bottom: 2px dotted rgba(90, 67, 39, 0.4);
+  border-bottom: 2px dotted color-mix(in srgb, var(--ink-soft) 45%, transparent);
   transform: translateY(-4px);
 }
 
@@ -926,4 +944,78 @@ a {
 .small-die {
   width: 26px;
   height: 26px;
+}
+
+/* ---------- Theme picker ---------- */
+
+.theme-picker {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.6rem;
+  margin: 0 0 1.8rem;
+}
+
+.theme-tile {
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 6px;
+  outline: 2px solid transparent;
+  outline-offset: 3px;
+  transition:
+    outline-color 200ms ease,
+    transform 150ms ease;
+}
+
+.theme-tile[aria-checked='true'] {
+  outline-color: var(--rubric);
+}
+
+.theme-tile:active {
+  transform: scale(0.97);
+}
+
+/* A miniature desk: resets the full-screen sizing, keeps the theme's colours and type. */
+.desk.theme-sample {
+  display: block;
+  min-height: 0;
+  border-radius: 6px;
+  padding: 5px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.theme-sample-page {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.2rem;
+  min-height: 84px;
+  padding: 0.7rem 0.6rem;
+  border-radius: 3px;
+  text-align: center;
+}
+
+.theme-sample-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  line-height: 1.1;
+  color: var(--ink);
+}
+
+.theme-sample-tagline {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  line-height: 1.25;
+  color: var(--ink-soft);
+}
+
+.contents-theme {
+  font-family: var(--font-caps);
+  font-style: normal;
+  color: var(--rubric);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  margin-right: 0.25rem;
 }

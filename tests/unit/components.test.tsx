@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Book } from '@/components/Book'
 import { PageLeaf } from '@/components/PageLeaf'
 import { RevealText } from '@/components/RevealText'
+import { Sketch } from '@/components/Sketch'
 import { markPageRead } from '@/components/readPages'
 import type { PageView } from '@/lib/story/types'
 
@@ -62,7 +63,7 @@ describe('RevealText', () => {
 
 describe('PageLeaf', () => {
   const noop = () => {}
-  const props = { storyId: 's1', storyTitle: 'The Salt Crown', number: 1, onRetry: noop, onRead: noop }
+  const props = { storyId: 's1', storyTitle: 'The Salt Crown', theme: 'historic-fantasy' as const, number: 1, onRetry: noop, onRead: noop }
 
   it('shows the quill while the page is being written', () => {
     render(<PageLeaf {...props} state={{ kind: 'loading' }} alreadyRead={false} onChoose={noop} />)
@@ -113,6 +114,88 @@ describe('PageLeaf', () => {
   })
 })
 
+describe('PageLeaf themes', () => {
+  const noop = () => {}
+
+  it('speaks in the future theme’s idiom', () => {
+    render(
+      <PageLeaf
+        storyId="s1"
+        storyTitle="T"
+        theme="future"
+        number={1}
+        state={{ kind: 'ready', page: page() }}
+        alreadyRead
+        onChoose={noop}
+        onRetry={noop}
+        onRead={noop}
+      />,
+    )
+    expect(screen.getByLabelText('Page 1').textContent).toBe('LOG 001')
+    const nav = screen.getByRole('navigation', { name: 'Choices' })
+    expect(nav.textContent).toContain('jump to LOG 043')
+    expect(nav.textContent).toContain('uncharted')
+  })
+
+  it('closes a noir case with a stamp', () => {
+    render(
+      <PageLeaf
+        storyId="s1"
+        storyTitle="T"
+        theme="noir"
+        number={9}
+        state={{ kind: 'ready', page: page({ number: 9, isEnding: true, endingTitle: 'Rain Check', choices: [], visits: 4 }) }}
+        alreadyRead
+        onChoose={noop}
+        onRetry={noop}
+        onRead={noop}
+      />,
+    )
+    expect(screen.getByText('Case Closed')).toBeTruthy()
+    expect(screen.getByText('4 detectives closed it this way')).toBeTruthy()
+  })
+
+  it('shows the theme’s waiting message', () => {
+    render(
+      <PageLeaf storyId="s1" storyTitle="T" theme="pirate" number={3} state={{ kind: 'loading' }} alreadyRead={false} onChoose={noop} onRetry={noop} onRead={noop} />,
+    )
+    expect(screen.getByRole('status').textContent).toContain('Charting the course')
+  })
+})
+
+describe('Sketch', () => {
+  it('reveals an image that finished loading before hydration', () => {
+    // jsdom never loads images; fake one that is already complete, then restore jsdom's getters.
+    const proto = HTMLImageElement.prototype
+    const saved = ['complete', 'naturalWidth'].map((k) => [k, Object.getOwnPropertyDescriptor(proto, k)] as const)
+    Object.defineProperty(proto, 'complete', { configurable: true, get: () => true })
+    Object.defineProperty(proto, 'naturalWidth', { configurable: true, get: () => 150 })
+    try {
+      const { container } = render(<Sketch src="/x.svg" appearAfter={0} />)
+      expect((container.querySelector('img') as HTMLImageElement).style.visibility).toBe('')
+    } finally {
+      for (const [k, d] of saved) {
+        if (d) Object.defineProperty(proto, k, d)
+        else delete (proto as unknown as Record<string, unknown>)[k]
+      }
+    }
+  })
+
+  it('stays hidden until the image loads, then appears', () => {
+    const { container } = render(<Sketch src="/x.svg" appearAfter={0} />)
+    const img = container.querySelector('img') as HTMLImageElement
+    expect(img.style.visibility).toBe('hidden')
+    fireEvent.load(img)
+    expect(img.style.visibility).toBe('')
+  })
+
+  it('disappears if the image fails', () => {
+    const { container } = render(<Sketch src="/x.svg" appearAfter={0} />)
+    fireEvent.error(container.querySelector('img')!)
+    expect(container.querySelector('.sketch')).toBeNull()
+  })
+})
+
 describe('Book', () => {
   function stubFetch(pages: Record<number, PageView>) {
     const fetchMock = vi.fn(async (url: string) => {
@@ -127,7 +210,7 @@ describe('Book', () => {
     stubFetch({ 1: page(), 43: page({ number: 43, parent: 1, text: 'You climb.' }) })
     const push = vi.spyOn(window.history, 'pushState')
     markPageRead('s1', 1)
-    const { container } = render(<Book storyId="s1" storyTitle="T" initialNumber={1} initialPage={page()} />)
+    const { container } = render(<Book storyId="s1" storyTitle="T" theme="historic-fantasy" initialNumber={1} initialPage={page()} />)
     await act(async () => {})
     fireEvent.click(screen.getByText('Climb the tower stair'))
     expect(push).toHaveBeenCalledWith(null, '', '/s/s1/43')
@@ -142,7 +225,7 @@ describe('Book', () => {
     const from = page({ number: 43, parent: 1 })
     stubFetch({ 43: from, 12: page({ number: 12, parent: 43 }) })
     markPageRead('s1', 43)
-    const { container } = render(<Book storyId="s1" storyTitle="T" initialNumber={43} initialPage={from} />)
+    const { container } = render(<Book storyId="s1" storyTitle="T" theme="historic-fantasy" initialNumber={43} initialPage={from} />)
     await act(async () => {})
     fireEvent.click(screen.getByText('Hide and watch'))
     // The earlier page swings in over the current one.
@@ -153,7 +236,7 @@ describe('Book', () => {
   it('handles the browser back button with a backward turn', async () => {
     stubFetch({ 1: page(), 43: page({ number: 43, parent: 1 }) })
     markPageRead('s1', 43)
-    const { container } = render(<Book storyId="s1" storyTitle="T" initialNumber={43} initialPage={page({ number: 43 })} />)
+    const { container } = render(<Book storyId="s1" storyTitle="T" theme="historic-fantasy" initialNumber={43} initialPage={page({ number: 43 })} />)
     await act(async () => {})
     window.history.replaceState(null, '', '/s/s1/1')
     act(() => {
@@ -164,7 +247,7 @@ describe('Book', () => {
 
   it('loads a page that was not ready on the server, showing the quill meanwhile', async () => {
     const fetchMock = stubFetch({ 5: page({ number: 5 }) })
-    render(<Book storyId="s1" storyTitle="T" initialNumber={5} initialPage={null} />)
+    render(<Book storyId="s1" storyTitle="T" theme="historic-fantasy" initialNumber={5} initialPage={null} />)
     expect(screen.getByRole('status')).toBeTruthy()
     await act(async () => {})
     expect(fetchMock).toHaveBeenCalledWith('/api/stories/s1/pages/5')
@@ -173,7 +256,7 @@ describe('Book', () => {
 
   it('shows an error with retry when the page cannot be written', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ error: 'The quill slipped.' }), { status: 502 })))
-    render(<Book storyId="s1" storyTitle="T" initialNumber={9} initialPage={null} />)
+    render(<Book storyId="s1" storyTitle="T" theme="historic-fantasy" initialNumber={9} initialPage={null} />)
     await act(async () => {})
     expect(screen.getByText('The quill slipped.')).toBeTruthy()
   })

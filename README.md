@@ -2,7 +2,16 @@
 
 A gamebook that writes itself as you read. Pick a hero and a place (or roll the dice), and the opening page is written for you. Each choice says *turn to page 43*; the page turns, and if nobody has been there before, it is written on the spot. Every page is kept, so the next reader who makes the same choice finds the same page, and can branch off somewhere new.
 
-Built for phones first, styled as an old illuminated storybook: parchment, dip-pen type, a red drop cap, words that ink themselves onto the page (tap to read ahead), a simple ink sketch on every page, and pages that turn forward or back depending on where the choice leads.
+Built for phones first. Every story is one of four kinds of book, each with its own paper, type, sketch style, page transition and voice:
+
+| Theme | Look | Choices read | Changing pages |
+|---|---|---|---|
+| Historic fantasy | Parchment, dip-pen type, red drop cap, ink-sketch marginalia | turn to 43 | 3D page turn, forward or back |
+| Future | Dark glass, scanlines, glowing cyan line art, words that decode | jump to LOG 043 | screen flare and shift |
+| Noir | Typed case file, venetian-blind shadows, coffee ring, rubber stamps, sketches as clipped photos | see file No. 43 | top sheet pulled off the pile |
+| Pirate | Captain's log over a sea chart with rhumb lines and compass roses | turn to 43 | 3D page turn |
+
+Words appear as they would be read (tap to read ahead), and a simple sketch appears on every page.
 
 ## Running it
 
@@ -21,6 +30,7 @@ Without a key, a built-in mock storyteller writes placeholder passages and sketc
 - **Written ahead.** When a page is served, the pages behind its choices are generated in the background (`PREFETCH_CHOICES`).
 - **Continuity.** Each story has a *bible* (world, characters, fixed rules). Each page records the facts it establishes or retires, and the model gets only the facts true on *that* branch.
 - **Rules in code.** Page numbers and when a branch must end are decided in code (seeded, reproducible), never by the model.
+- **Themes.** `src/lib/themes.ts` holds each theme's narration voice, sketch style, presets and interface wording; `src/app/themes/*.css` holds its look. Sketches are always requested as black lines on white, and each theme recolours them in CSS.
 - **Models.** Gemini text (`gemini-3.8-flash`) with structured JSON output, and Gemini image (`gemini-3.1-flash-lite-image`) for the sketches. Override with `GEMINI_TEXT_MODEL` / `GEMINI_IMAGE_MODEL`.
 
 ## Tests

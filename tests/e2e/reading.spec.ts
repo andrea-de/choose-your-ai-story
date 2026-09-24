@@ -33,7 +33,7 @@ test('begin a tale, read page 1, and turn to the page a choice names', async ({ 
   await readAhead(page)
 
   const choice = page.getByTestId('current-page').locator('.choice').first()
-  const target = await choice.locator('.page-no').innerText()
+  const target = (await choice.getAttribute('data-target'))!
   await choice.click()
 
   await expect(page).toHaveURL(new RegExp(`/s/[a-z0-9]+/${target}$`))
@@ -59,7 +59,7 @@ test('a second reader sees the same page and that the path was explored', async 
   await readAhead(page)
   const firstText = await page.getByTestId('current-page').getByTestId('prose').textContent()
   const choice = page.getByTestId('current-page').locator('.choice').first()
-  const target = await choice.locator('.page-no').innerText()
+  const target = (await choice.getAttribute('data-target'))!
   await choice.click()
   await expect(page.getByTestId('current-page').getByTestId('prose')).toBeVisible({ timeout: 20_000 })
 
@@ -68,7 +68,7 @@ test('a second reader sees the same page and that the path was explored', async 
   await reader.goto(page.url().replace(/\/\d+$/, '/1'))
   await reader.getByTestId('page-text').click()
   expect(await reader.getByTestId('prose').textContent()).toBe(firstText)
-  const same = reader.locator('.choice', { has: reader.locator('.page-no', { hasText: new RegExp(`^${target}$`) }) })
+  const same = reader.locator(`.choice[data-target="${target}"]`)
   await expect(same).not.toContainText('no one has gone this way')
   await other.close()
 })
@@ -103,4 +103,36 @@ test('the book fits the screen with no sideways scroll', async ({ page }) => {
   await beginTale(page)
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
   expect(overflow).toBeLessThanOrEqual(0)
+})
+
+const themes = [
+  { name: 'Future', id: 'future', begin: 'Launch', folio: 'LOG 001', choiceLabel: /jump to LOG \d{3}/ },
+  { name: 'Noir', id: 'noir', begin: 'Open the Case', folio: 'No. 1', choiceLabel: /see file No\. \d+/ },
+  { name: 'Pirate', id: 'pirate', begin: 'Set Sail', folio: '1', choiceLabel: /turn to \d+/ },
+]
+
+for (const t of themes) {
+  test(`${t.name}: the title page restyles, and the book opens in that theme`, async ({ page }) => {
+    await page.goto('/')
+    await page.getByRole('radio', { name: new RegExp(t.name) }).click()
+    await expect(page.locator('.desk').first()).toHaveAttribute('data-theme', t.id)
+    await page.getByRole('button', { name: t.begin }).click()
+    await page.waitForURL(/\/s\/[a-z0-9]+\/1$/)
+    await expect(page.locator('.desk').first()).toHaveAttribute('data-theme', t.id)
+    await expect(page.getByLabel('Page 1')).toHaveText(t.folio)
+    await readAhead(page)
+    await expect(page.getByTestId('current-page').locator('.choice').first()).toContainText(t.choiceLabel)
+    await expect(page.getByTestId('current-page').locator('.sketch img')).toBeVisible()
+  })
+}
+
+test('a sketch shows when opening an already-written page directly', async ({ page, browser }) => {
+  await beginTale(page)
+  await readAhead(page)
+  const url = page.url()
+  const fresh = await (await browser.newContext()).newPage()
+  await fresh.goto(url)
+  await fresh.getByTestId('page-text').click()
+  await expect(fresh.locator('.sketch img')).toBeVisible()
+  await expect(fresh.locator('.sketch img')).not.toHaveAttribute('style', /hidden/)
 })

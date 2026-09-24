@@ -3,13 +3,14 @@
 import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { turnDirection } from '@/lib/story/tree'
-import type { PageView } from '@/lib/story/types'
+import type { PageView, ThemeId } from '@/lib/story/types'
 import { PageLeaf, type LeafState } from './PageLeaf'
 import { markPageRead, useReadPages } from './readPages'
 
 interface BookProps {
   storyId: string
   storyTitle: string
+  theme: ThemeId
   initialNumber: number
   initialPage: PageView | null
 }
@@ -20,6 +21,7 @@ interface Turn {
   direction: 'forward' | 'backward'
 }
 
+/** How long the leaving page stays mounted; the longest theme transition. */
 const TURN_MS = 760
 
 /** Fetches a page; the server writes it first if nobody has turned to it yet. */
@@ -40,7 +42,7 @@ function pageFromPath(storyId: string): number | null {
 }
 
 /** A book whose pages turn forward or back depending on where the choice leads. */
-export function Book({ storyId, storyTitle, initialNumber, initialPage }: BookProps) {
+export function Book({ storyId, storyTitle, theme, initialNumber, initialPage }: BookProps) {
   const [current, setCurrent] = useState(initialNumber)
   const [turn, setTurn] = useState<Turn | null>(null)
   const [leaves, setLeaves] = useState<Record<number, LeafState>>(() =>
@@ -100,7 +102,7 @@ export function Book({ storyId, storyTitle, initialNumber, initialPage }: BookPr
   }
 
   const renderLeaf = (number: number, role: 'top' | 'under' | 'only') => {
-    const classes = ['leaf', 'parchment']
+    const classes = ['leaf', 'paper']
     if (turn && role === 'top') classes.push('turning', turn.direction)
     if (turn && role === 'under') classes.push('under', 'shadowed', turn.direction)
     return (
@@ -114,6 +116,7 @@ export function Book({ storyId, storyTitle, initialNumber, initialPage }: BookPr
         <PageLeaf
           storyId={storyId}
           storyTitle={storyTitle}
+          theme={theme}
           number={number}
           state={leaves[number] ?? { kind: 'loading' }}
           alreadyRead={read.has(number)}
@@ -138,13 +141,15 @@ export function Book({ storyId, storyTitle, initialNumber, initialPage }: BookPr
   }
 
   return (
-    <main className="book">
-      {leafNodes}
-      <Link href="/" className="ribbon" aria-label="Return to the library">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden>
-          <path d="M2 3h4a1 1 0 0 1 1 1v8a1 1 0 0 0-1-1H2zM12 3H8a1 1 0 0 0-1 1v8a1 1 0 0 1 1-1h4z" />
-        </svg>
-      </Link>
-    </main>
+    <div className="desk" data-theme={theme}>
+      <main className="book">
+        {leafNodes}
+        <Link href="/" className="ribbon" aria-label="Return to the library">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden>
+            <path d="M2 3h4a1 1 0 0 1 1 1v8a1 1 0 0 0-1-1H2zM12 3H8a1 1 0 0 0-1 1v8a1 1 0 0 1 1-1h4z" />
+          </svg>
+        </Link>
+      </main>
+    </div>
   )
 }

@@ -2,8 +2,9 @@ import Link from 'next/link'
 
 export default function NotFound() {
   return (
+    <div className="desk" data-theme="historic-fantasy">
     <main className="book">
-      <article className="leaf parchment">
+      <article className="leaf paper">
         <div className="leaf-inner">
           <p className="folio">?</p>
           <div className="quill-wait">
@@ -17,5 +18,6 @@ export default function NotFound() {
         </div>
       </article>
     </main>
+    </div>
   )
 }

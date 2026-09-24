@@ -2,11 +2,11 @@
 
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { getTheme } from '@/lib/themes'
+import type { ThemeId } from '@/lib/story/types'
 
 interface NewTaleProps {
-  heroes: readonly string[]
-  settings: readonly string[]
-  tones: readonly string[]
+  theme: ThemeId
 }
 
 function pickOther<T>(items: readonly T[], current: T): T {
@@ -30,7 +30,8 @@ function Die({ className }: { className?: string }) {
 }
 
 /** The "begin a new tale" form: fill in the blanks, or roll the dice. */
-export function NewTale({ heroes, settings, tones }: NewTaleProps) {
+export function NewTale({ theme }: NewTaleProps) {
+  const { heroes, settings, tones, ui } = getTheme(theme)
   const router = useRouter()
   const [hero, setHero] = useState(heroes[0])
   const [setting, setSetting] = useState(settings[0])
@@ -54,7 +55,7 @@ export function NewTale({ heroes, settings, tones }: NewTaleProps) {
       const res = await fetch('/api/stories', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ theme: 'historic-fantasy', hero, setting, tone }),
+        body: JSON.stringify({ theme, hero, setting, tone }),
       })
       const body = (await res.json()) as { id?: string; firstPage?: number; error?: string }
       if (!res.ok || !body.id) throw new Error(body.error ?? 'The book would not open.')
@@ -74,21 +75,21 @@ export function NewTale({ heroes, settings, tones }: NewTaleProps) {
       aria-label="Begin a new tale"
     >
       <div className="config-row">
-        <label htmlFor="hero">You are</label>
+        <label htmlFor="hero">{ui.heroLabel}</label>
         <input id="hero" className="config-input" value={hero} maxLength={120} onChange={(e) => setHero(e.target.value)} />
         <button type="button" className="icon-button" aria-label="Roll a different hero" onClick={() => setHero((h) => pickOther(heroes, h))}>
           <Die className="small-die" />
         </button>
       </div>
       <div className="config-row">
-        <label htmlFor="setting">In</label>
+        <label htmlFor="setting">{ui.settingLabel}</label>
         <input id="setting" className="config-input" value={setting} maxLength={160} onChange={(e) => setSetting(e.target.value)} />
         <button type="button" className="icon-button" aria-label="Roll a different place" onClick={() => setSetting((s) => pickOther(settings, s))}>
           <Die className="small-die" />
         </button>
       </div>
       <div className="config-row">
-        <label id="tone-label">And the tale is</label>
+        <label id="tone-label">{ui.toneLabel}</label>
         <div className="tones" role="group" aria-labelledby="tone-label">
           {tones.map((t) => (
             <button key={t} type="button" className="tone" aria-pressed={t === tone} onClick={() => setTone(t)}>
@@ -101,13 +102,13 @@ export function NewTale({ heroes, settings, tones }: NewTaleProps) {
       <div className="begin-row">
         <button type="button" className={`dice-button${rolling ? ' rolling' : ''}`} onClick={roll} disabled={busy}>
           <Die />
-          Roll the dice
+          {ui.roll}
         </button>
         <button type="submit" className="seal" disabled={busy || !hero.trim() || !setting.trim()}>
-          {busy ? '…' : 'Begin'}
+          {busy ? '…' : ui.begin}
         </button>
       </div>
-      {busy && <p className="form-error" style={{ color: 'var(--ink-soft)' }}>Binding the book…</p>}
+      {busy && <p className="form-error" style={{ color: 'var(--ink-soft)' }}>{ui.binding}</p>}
       {error && <p className="form-error">{error}</p>}
     </form>
   )

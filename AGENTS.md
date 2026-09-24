@@ -17,4 +17,5 @@ A shared, AI-written gamebook. Every page is generated the first time a reader t
 - Engine: `src/lib/story/` (tree maths, prompts, schemas, `StoryService`). Pure logic lives in `tree.ts`; keep it pure.
 - Models: `src/lib/ai/` behind the `StoryTeller` interface. Game rules (page numbers, endings, facts) are decided in code, never by the model.
 - Storage: `src/lib/store/` behind `StoryStore`. `claimPage`/`completePage` must stay atomic in any new implementation.
-- UI: `src/components/`, styles in `src/app/globals.css`. Mobile first; respect `prefers-reduced-motion`.
+- UI: `src/components/`, base styles in `src/app/globals.css`, one stylesheet per theme in `src/app/themes/`, scoped by `.desk[data-theme=…]`. Mobile first; respect `prefers-reduced-motion`.
+- Themes: `src/lib/themes.ts` (voice, presets, UI wording). Theme CSS must also target `.desk.theme-sample[data-theme=…] .paper` so title-page tiles don't inherit the surrounding theme. Don't put `url(#…)` inside CSS custom properties.

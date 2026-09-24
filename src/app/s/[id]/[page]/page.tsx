@@ -32,5 +32,5 @@ export async function generateMetadata(props: PageProps<'/s/[id]/[page]'>): Prom
 export default async function ReaderPage(props: PageProps<'/s/[id]/[page]'>) {
   const { id, page } = await props.params
   const { story, number, page: view } = await load(id, page)
-  return <Book key={id} storyId={id} storyTitle={story.bible.title} initialNumber={number} initialPage={view} />
+  return <Book key={id} storyId={id} storyTitle={story.bible.title} theme={story.config.theme} initialNumber={number} initialPage={view} />
 }
