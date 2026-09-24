@@ -51,8 +51,14 @@ export const pageDraftSchema = z.object({
 
 export type PageDraft = z.infer<typeof pageDraftSchema>
 
-export const bibleJsonSchema = z.toJSONSchema(bibleSchema)
-export const pageDraftJsonSchema = z.toJSONSchema(pageDraftSchema)
+/** JSON Schema for the model, without the `$schema` header Gemini does not need. */
+function forModel(schema: z.ZodType): Record<string, unknown> {
+  const { $schema: _ignored, ...rest } = z.toJSONSchema(schema) as Record<string, unknown>
+  return rest
+}
+
+export const bibleJsonSchema = forModel(bibleSchema)
+export const pageDraftJsonSchema = forModel(pageDraftSchema)
 
 /** Body of POST /api/stories. Every field is optional; missing ones are rolled. */
 export const newStoryRequestSchema = z.object({

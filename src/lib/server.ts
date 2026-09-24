@@ -21,7 +21,7 @@ function createTeller(env: NodeJS.ProcessEnv): StoryTeller {
 
 export function createService(env: NodeJS.ProcessEnv = process.env): StoryService {
   const store = env.STORY_STORE === 'memory' ? new MemoryStore() : new MemoryStore(path.join(process.cwd(), '.data'))
-  return new StoryService(store, createTeller(env))
+  return new StoryService(store, createTeller(env), { sketches: env.SKETCHES !== 'off' })
 }
 
 const globalForService = globalThis as unknown as { storyService?: StoryService }

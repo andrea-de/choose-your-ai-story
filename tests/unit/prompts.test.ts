@@ -118,6 +118,7 @@ describe('schemas', () => {
   it('exports a JSON schema the model can follow', () => {
     const schema = pageDraftJsonSchema as { type: string; required: string[] }
     expect(schema.type).toBe('object')
+    expect(schema).not.toHaveProperty('$schema')
     expect(schema.required).toEqual(
       expect.arrayContaining(['text', 'choices', 'newFacts', 'retiredFactIds', 'illustrationPrompt']),
     )

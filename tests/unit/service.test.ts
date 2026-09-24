@@ -302,3 +302,17 @@ describe('StoryService.getIllustration', () => {
     await expect(service.getIllustration(story.id, 1)).rejects.toBeInstanceOf(PageNotFoundError)
   })
 })
+
+describe('StoryService with sketches off', () => {
+  it('hides sketches and never calls the image model', async () => {
+    const { MockStoryTeller } = await import('@/lib/ai/mock')
+    const teller = new MockStoryTeller()
+    const draw = vi.spyOn(teller, 'drawIllustration')
+    const { service } = makeService({ teller, sketches: false })
+    const story = await service.createStory()
+    const page = await service.readPage(story.id, 1)
+    expect((await service.viewPage(story.id, page)).hasIllustration).toBe(false)
+    await expect(service.getIllustration(story.id, 1)).rejects.toBeInstanceOf(PageNotFoundError)
+    expect(draw).not.toHaveBeenCalled()
+  })
+})

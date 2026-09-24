@@ -19,6 +19,8 @@ export interface StoryServiceOptions {
   /** How long to wait for another request that is writing the same page. */
   waitTimeoutMs?: number
   pollMs?: number
+  /** Draw a sketch for each page. Off saves the image-model cost (and suits keys without billing). */
+  sketches?: boolean
 }
 
 const DEFAULTS = {
@@ -35,6 +37,7 @@ export class StoryService {
   private readonly staleAfterMs: number
   private readonly waitTimeoutMs: number
   private readonly pollMs: number
+  private readonly sketches: boolean
   /** In-process single flight: one generation per page per server. */
   private readonly inflight = new Map<string, Promise<PageNode>>()
   private readonly drawing = new Map<string, Promise<Illustration>>()
@@ -50,6 +53,7 @@ export class StoryService {
     this.staleAfterMs = options.staleAfterMs ?? 120_000
     this.waitTimeoutMs = options.waitTimeoutMs ?? 90_000
     this.pollMs = options.pollMs ?? 400
+    this.sketches = options.sketches ?? true
   }
 
   get tellerName() {
@@ -258,10 +262,12 @@ export class StoryService {
 
   /** A page as the reader sees it, including which choices others have taken. */
   async viewPage(storyId: string, page: PageNode): Promise<PageView> {
-    return toPageView(page, await this.store.getPages(storyId))
+    const view = toPageView(page, await this.store.getPages(storyId))
+    return this.sketches ? view : { ...view, hasIllustration: false }
   }
 
   async getIllustration(storyId: string, number: number): Promise<Illustration> {
+    if (!this.sketches) throw new PageNotFoundError('Sketches are turned off')
     const cached = await this.store.getIllustration(storyId, number)
     if (cached) return cached
     const key = `${storyId}:${number}`

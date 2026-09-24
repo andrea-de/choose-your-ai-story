@@ -15,15 +15,54 @@ Built for phones first. Every story is one of six kinds of book, each with its o
 
 Words appear as they would be read (tap to read ahead), and a simple sketch appears on every page.
 
-## Running it
+## Getting started
+
+### What you need
+
+- **Node.js 22 or newer.**
+- **A Gemini API key** (optional). Without one, a built-in mock storyteller writes placeholder passages and sketches, so everything works offline.
+  1. Go to [Google AI Studio → API keys](https://aistudio.google.com/apikey) and create a key.
+  2. For sketches, enable billing on that key's Google Cloud project. Gemini's image models have no free tier; text does. On a free key, set `SKETCHES=off` and stories still work, just without drawings.
+  3. Set a spending cap in the Google Cloud console before sharing the app with anyone.
+
+### Run it
 
 ```bash
+git clone https://github.com/andrea-de/choose-your-ai-story
+cd choose-your-ai-story
 npm install
-cp .env.example .env.local   # add GEMINI_API_KEY, or leave it blank for the mock storyteller
+cp .env.example .env.local     # then put your key after GEMINI_API_KEY=
 npm run dev
 ```
 
-Without a key, a built-in mock storyteller writes placeholder passages and sketches, so the whole app works offline.
+Open <http://localhost:3000>. The footer of the title page says *no storyteller key configured* while the mock is in use.
+
+To read on your phone, join the same Wi-Fi and run `npm run dev -- -H 0.0.0.0`, then open `http://<your-computer's-IP>:3000`.
+
+For a faster production build: `npm run build && npm start`.
+
+### Settings (`.env.local`)
+
+| Variable | Default | What it does |
+|---|---|---|
+| `GEMINI_API_KEY` | unset | Your key. Unset means the mock storyteller. |
+| `AI_PROVIDER` | `gemini` if a key is set, else `mock` | Force `gemini` or `mock`. |
+| `GEMINI_TEXT_MODEL` | `gemini-3.8-flash` | Model that writes the story. |
+| `GEMINI_IMAGE_MODEL` | `gemini-3.1-flash-lite-image` | Model that draws the sketches. `gemini-3.1-flash-image` is sharper and costs twice as much. |
+| `SKETCHES` | `on` | `off` skips sketches entirely. |
+| `PREFETCH_CHOICES` | `true` | Write the pages behind each choice while the reader is still reading, so turning is instant. `false` halves text cost but makes readers wait. |
+| `STORY_STORE` | `file` | `file` keeps stories in `.data/` across restarts; `memory` forgets them on restart. |
+
+### What it costs
+
+At Google's September 2026 prices, a page costs roughly **$0.005–0.01** of text plus **$0.034** for its sketch (only drawn when someone views the page). A page is written once and every later reader sees it for free. Text prices for `gemini-3.8-flash` double on January 1, 2027.
+
+### Troubleshooting
+
+- **"The quill slipped. Please try again."** Writing the page failed. The terminal running the server shows the real error. Tapping *Try the page again* retries.
+- **Model not found errors.** Google renames models over time; set `GEMINI_TEXT_MODEL` / `GEMINI_IMAGE_MODEL` to current IDs from the [model list](https://ai.google.dev/gemini-api/docs/models).
+- **Pages write but no sketches appear.** Usually billing is not enabled for image generation. Enable it, or set `SKETCHES=off`.
+- **Start fresh.** Stop the server and delete the `.data/` folder.
 
 ## How it works
 
@@ -33,7 +72,7 @@ Without a key, a built-in mock storyteller writes placeholder passages and sketc
 - **Continuity.** Each story has a *bible* (world, characters, fixed rules). Each page records the facts it establishes or retires, and the model gets only the facts true on *that* branch.
 - **Rules in code.** Page numbers and when a branch must end are decided in code (seeded, reproducible), never by the model.
 - **Themes.** `src/lib/themes.ts` holds each theme's narration voice, sketch style, presets and interface wording; `src/app/themes/*.css` holds its look. Sketches are always requested as black lines on white, and each theme recolours them in CSS.
-- **Models.** Gemini text (`gemini-3.8-flash`) with structured JSON output, and Gemini image (`gemini-3.1-flash-lite-image`) for the sketches. Override with `GEMINI_TEXT_MODEL` / `GEMINI_IMAGE_MODEL`.
+- **Models.** Gemini text with structured JSON output writes each page; a Gemini image model draws each sketch. Both sit behind the `StoryTeller` interface in `src/lib/ai/`, so another provider can be swapped in.
 
 ## Tests
 
