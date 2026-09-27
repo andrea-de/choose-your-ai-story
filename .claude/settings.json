@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && setsid nohup bash scripts/tailnet.sh >/tmp/tailnet.log 2>&1 < /dev/null &"
+          }
+        ]
+      }
+    ]
+  }
+}

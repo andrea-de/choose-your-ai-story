@@ -56,6 +56,14 @@ For a faster production build: `npm run build && npm start`.
 
 At Google's September 2026 prices, a page costs roughly **$0.005–0.01** of text, and library sketches cost nothing. A page is written once and every later reader sees it for free. Text prices for `gemini-3.8-flash` double on January 1, 2027. (With `SKETCHES=generate`, add about $0.034 per sketch.)
 
+### Previewing a cloud session on your phone (Tailscale)
+
+Claude Code cloud sessions can join your tailnet, so you can open the dev server a session is running at `http://claude-dev:3000` from your phone or laptop.
+
+1. In Tailscale, add `"tag:claude-dev": ["autogroup:admin"]` to `tagOwners`, and make grants' `src` `["autogroup:member"]` so tagged devices can't reach yours. Then generate an auth key that is **reusable**, **ephemeral** and tagged `tag:claude-dev`.
+2. In the cloud environment's settings, add `TS_AUTHKEY=tskey-auth-…` as an environment variable.
+3. Start a new session. The SessionStart hook in `.claude/settings.json` runs `scripts/tailnet.sh`, which installs Tailscale if needed and joins the tailnet in the background (log in `/tmp/tailnet.log`). Ask the session to run the app on `0.0.0.0:3000`.
+
 ### Troubleshooting
 
 - **"The quill slipped. Please try again."** Writing the page failed. The terminal running the server shows the real error. Tapping *Try the page again* retries.
