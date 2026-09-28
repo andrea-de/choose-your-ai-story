@@ -44,6 +44,17 @@ describe('changeTempo', () => {
     expect((await read(changeTempo(tone(), 24000, 1))).length).toBe(24000)
   })
 
+  it('passes the narration through untouched on a server without ffmpeg', async () => {
+    const path = process.env.PATH
+    process.env.PATH = ''
+    try {
+      const out = await read(processVoice(tone(), 24000, { speed: 1.4, treatment: 'robot' }))
+      expect(out).toEqual(await read(tone()))
+    } finally {
+      process.env.PATH = path
+    }
+  })
+
   it('accepts only the offered speeds', () => {
     expect(parseSpeed('1.2')).toBe(1.2)
     expect(parseSpeed('7')).toBe(1)

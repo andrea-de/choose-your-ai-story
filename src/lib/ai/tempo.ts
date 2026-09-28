@@ -53,31 +53,41 @@ export function processVoice(
   if (!graph) return audio
   const format = ['-f', 's16le', '-ar', String(sampleRate), '-ac', '1']
   const ff = spawn('ffmpeg', ['-v', 'error', ...format, '-i', 'pipe:0', '-filter_complex', graph, '-map', '[out]', ...format, 'pipe:1'])
-  let failed = false
+  // Nothing is read from the narration until ffmpeg has either started or failed to,
+  // so that without it every byte can still pass through untouched.
+  const started = new Promise<boolean>((resolve) => {
+    ff.once('spawn', () => resolve(true))
+    ff.once('error', () => resolve(false))
+  })
   return new ReadableStream<Uint8Array>({
-    start(controller) {
+    async start(controller) {
+      if (!(await started)) {
+        // No ffmpeg: play it as it is rather than not at all.
+        void audio.pipeTo(
+          new WritableStream({
+            write: (c) => controller.enqueue(c),
+            close: () => controller.close(),
+            abort: (e) => controller.error(e),
+          }),
+        ).catch(() => {})
+        return
+      }
       ff.stdout.on('data', (chunk: Buffer) => controller.enqueue(new Uint8Array(chunk)))
-      ff.stdout.on('end', () => {
-        if (!failed) controller.close()
-      })
-      ff.on('error', () => {
-        // No ffmpeg: play at normal speed rather than not at all.
-        failed = true
-        void audio.pipeTo(new WritableStream({ write: (c) => controller.enqueue(c), close: () => controller.close() }))
-      })
+      ff.stdout.on('end', () => controller.close())
       ff.stdin.on('error', () => {})
       void (async () => {
         const reader = audio.getReader()
         try {
           for (;;) {
             const { done, value } = await reader.read()
-            if (done || failed) break
+            if (done) break
             if (!ff.stdin.write(value)) await new Promise((r) => ff.stdin.once('drain', r))
           }
         } catch (error) {
           controller.error(error)
+          ff.kill()
         } finally {
-          if (!failed) ff.stdin.end()
+          ff.stdin.end()
         }
       })()
     },
