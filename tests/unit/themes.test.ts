@@ -4,7 +4,8 @@ import { MockStoryTeller, PHRASEBOOKS } from '@/lib/ai/mock'
 import { SKETCH_LIBRARY, sketchIds, sketchesFor } from '@/lib/sketches'
 import { pagePrompt } from '@/lib/story/prompts'
 import { newStoryRequestSchema } from '@/lib/story/schema'
-import { allThemes, getTheme, themeIds, toRoman } from '@/lib/themes'
+import { allThemes, getTheme, splitTones, STANDARD_TONES, themeIds, toRoman } from '@/lib/themes'
+import { rollTones, toggleTone } from '@/components/NewTale'
 
 describe('themes', () => {
   it('offers the six kinds of book', () => {
@@ -64,7 +65,7 @@ describe('themes', () => {
   it('puts the theme’s voice into the page prompt', () => {
     const theme = getTheme('noir')
     const prompt = pagePrompt({
-      bible: { title: 'T', premise: 'P', world: 'W', characters: [{ name: 'n', description: 'd' }], rules: ['r'] },
+      bible: { title: 'T', premise: 'P', heart: 'H', goal: 'G', danger: 'D', world: 'W', characters: [{ name: 'n', description: 'd' }], rules: ['r'] },
       theme,
       config: { theme: 'noir', hero: 'h', setting: 's', tone: 't' },
       path: [],
@@ -161,5 +162,65 @@ describe('sketch library', () => {
     const { readdirSync } = await import('node:fs')
     const files = readdirSync('public/sketches').filter((f) => f.endsWith('.svg')).map((f) => f.replace('.svg', ''))
     expect(files.sort()).toEqual([...sketchIds].sort())
+  })
+})
+
+describe('hero and setting suggestions', () => {
+  /** Words too general to make two suggestions feel alike. */
+  const GENERAL = new Set(
+    ('never always every where after three small young knows night street planet colony world space station ' +
+      'asteroid alien earth house village valley royal private harbour merchant palace river bronze slopes fleet ' +
+      'secret pirate island mountain before other their there about looks everyone still first whose').split(' '),
+  )
+  const keyWords = (s: string) => new Set((s.toLowerCase().match(/[a-z]+/g) ?? []).filter((w) => w.length >= 5 && !GENERAL.has(w)))
+
+  it.each(themeIds)('%s offers plenty of heroes and settings, none repeated', (id) => {
+    const { heroes, settings } = getTheme(id)
+    expect(heroes.length).toBeGreaterThanOrEqual(40)
+    expect(settings.length).toBeGreaterThanOrEqual(40)
+    expect(new Set(heroes).size).toBe(heroes.length)
+    expect(new Set(settings).size).toBe(settings.length)
+  })
+
+  it.each(themeIds)('%s never pairs a hero with a setting built on the same idea', (id) => {
+    const { heroes, settings } = getTheme(id)
+    for (const hero of heroes) {
+      const words = keyWords(hero)
+      for (const setting of settings) {
+        const shared = [...keyWords(setting)].filter((w) => words.has(w))
+        expect(shared, `${hero} / ${setting}`).toEqual([])
+      }
+    }
+  })
+
+  it.each(themeIds)('%s heroes are characters, not plots', (id) => {
+    for (const hero of getTheme(id).heroes) expect(hero, hero).not.toMatch(/\b(stolen|stole|missing|vanished|cursed|sealed)\b/)
+  })
+})
+
+describe('moods', () => {
+  it.each(themeIds)('%s offers its own two moods and the standard eight', (id) => {
+    const { tones } = getTheme(id)
+    expect(tones).toHaveLength(10)
+    expect(tones.slice(2)).toEqual([...STANDARD_TONES])
+    expect(new Set(tones).size).toBe(10)
+  })
+
+  it('lets the reader pick up to two, replacing the older pick, and never none', () => {
+    expect(toggleTone(['funny'], 'spooky')).toEqual(['funny', 'spooky'])
+    expect(toggleTone(['funny', 'spooky'], 'epic')).toEqual(['spooky', 'epic'])
+    expect(toggleTone(['funny', 'spooky'], 'funny')).toEqual(['spooky'])
+    expect(toggleTone(['funny'], 'funny')).toEqual(['funny'])
+    expect(splitTones('treasure-hunting and spooky')).toEqual(['treasure-hunting', 'spooky'])
+  })
+
+  it('rolls one or two different moods', () => {
+    const tones = getTheme('noir').tones
+    for (let i = 0; i < 50; i++) {
+      const rolled = rollTones(tones)
+      expect(rolled.length).toBeGreaterThanOrEqual(1)
+      expect(rolled.length).toBeLessThanOrEqual(2)
+      expect(new Set(rolled).size).toBe(rolled.length)
+    }
   })
 })

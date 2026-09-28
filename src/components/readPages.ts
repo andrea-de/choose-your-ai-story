@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react'
 
-/** Pages this browser has already read, per story, kept for the session. */
+/** Pages this browser has already read, per story. Kept, so the story map can show where you have been. */
 
 const EMPTY: ReadonlySet<number> = new Set()
 const listeners = new Set<() => void>()
@@ -11,7 +11,8 @@ const keyFor = (storyId: string) => `read:${storyId}`
 
 function readRaw(storyId: string): string {
   try {
-    return sessionStorage.getItem(keyFor(storyId)) ?? fallback.get(storyId) ?? '[]'
+    // The in-memory copy is only for when storage is unavailable, not a second source.
+    return localStorage.getItem(keyFor(storyId)) ?? '[]'
   } catch {
     return fallback.get(storyId) ?? '[]'
   }
@@ -37,7 +38,7 @@ export function markPageRead(storyId: string, page: number) {
   const raw = JSON.stringify([...current, page])
   fallback.set(storyId, raw)
   try {
-    sessionStorage.setItem(keyFor(storyId), raw)
+    localStorage.setItem(keyFor(storyId), raw)
   } catch {
     // Storage unavailable; the in-memory copy still works for this visit.
   }

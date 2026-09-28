@@ -64,7 +64,9 @@ a {
 
 /* The surface the book lies on; each theme restyles it. */
 .desk {
-  min-height: 100dvh;
+  height: 100dvh;
+  /* Contains the book's margin; overflow: clip alone would let it collapse through and scroll the page. */
+  display: flow-root;
   overflow: clip;
   color: var(--ink);
   font-family: var(--font-body);
@@ -97,6 +99,8 @@ a {
   perspective: 2200px;
   /* clip, not hidden: a hidden box can still be scrolled by focus or scrollIntoView. */
   overflow: clip;
+  /* Swipes turn the page; pinching still zooms. */
+  touch-action: pinch-zoom;
 }
 
 @media (min-width: 700px) {
@@ -110,9 +114,8 @@ a {
 .leaf {
   position: absolute;
   inset: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
+  /* Nothing scrolls: a page that runs over continues on the next sheet. */
+  overflow: clip;
   backface-visibility: hidden;
   transform-origin: left center;
   transform-style: preserve-3d;
@@ -141,12 +144,103 @@ a {
 }
 
 .leaf-inner {
-  min-height: 100%;
-  padding: calc(env(safe-area-inset-top) + 28px) var(--gutter) calc(env(safe-area-inset-bottom) + 48px);
+  height: 100%;
+  padding: calc(env(safe-area-inset-top) + 28px) var(--gutter) calc(env(safe-area-inset-bottom) + 12px);
   max-width: 640px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
+}
+
+/* ---------- Sheets: one screen of a page ---------- */
+
+.running-head {
+  flex: none;
+}
+
+/* The window onto the page's content, which CSS lays out in columns one window wide. */
+.flow-window {
+  flex: 1 1 auto;
+  min-height: 0;
+  container-type: size;
+  overflow: clip;
+}
+
+.flow {
+  --flow-gap: 64px;
+  position: relative;
+  height: 100%;
+  column-width: 100cqw;
+  column-gap: var(--flow-gap);
+  column-fill: auto;
+  transform: translateX(calc(var(--sheet, 0) * -1 * (100cqw + var(--flow-gap))));
+}
+
+.flow-end {
+  height: 0;
+}
+
+.sheet-nav {
+  flex: none;
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 48px;
+  margin-top: 0.4rem;
+}
+
+.sheet-prev,
+.sheet-next {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 0.3rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-caps);
+  font-size: 0.9rem;
+  letter-spacing: 0.1em;
+  color: var(--rubric);
+  transition: opacity 400ms ease;
+}
+
+.sheet-next {
+  justify-content: flex-end;
+}
+
+.sheet-prev:disabled,
+.sheet-next:disabled {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sheet-middle {
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.sheet-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.sheet-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ink-faint);
+  opacity: 0.45;
+}
+
+.sheet-dots span.on {
+  background: var(--rubric);
+  opacity: 1;
 }
 
 /* ---------- Page turning ---------- */
@@ -288,8 +382,14 @@ a {
   text-align: center;
   color: var(--ink-faint);
   margin: 0 0 0.4rem;
-  padding: 0 36px;
+  /* Clear of the two ribbons on the right, and centred, so the same on the left. */
+  padding: 0 84px;
   text-transform: uppercase;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
 }
 
 .prose {
@@ -304,10 +404,34 @@ a {
 
 .prose p {
   margin: 0 0 1em;
+  orphans: 2;
+  widows: 2;
 }
 
 .prose p + p {
   text-indent: 1.4em;
+}
+
+/* The paragraph the narrator is reading: a thin mark in the margin beside it. */
+.prose p {
+  position: relative;
+}
+
+.prose p::before {
+  content: '';
+  position: absolute;
+  left: -0.75em;
+  top: 0.3em;
+  bottom: 0.3em;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--rubric);
+  opacity: 0;
+  transition: opacity 400ms ease;
+}
+
+.prose p.speaking::before {
+  opacity: 0.8;
 }
 
 .drop-cap {
@@ -326,11 +450,37 @@ a {
   opacity: 0;
   filter: blur(1.5px);
   animation: ink-in 700ms ease forwards;
-  animation-delay: calc(var(--i) * var(--pace, 120ms));
+  /* --t: when this word appears on the page's clock; --from: the clock when this sheet came into view. */
+  animation-delay: calc((var(--t, 0) - var(--from, 0)) * 1ms);
+}
+
+/* Waiting for the narrator: every word keeps its place, unseen. */
+.prose.hold .word {
+  animation: none;
+  opacity: 0;
 }
 
 .drop-cap.word {
   animation-name: initial-in;
+}
+
+/*
+ * A page that opens with dialogue: the quote mark stays text-sized and hangs in the
+ * margin to the left of the initial, the way printers set it.
+ */
+.drop-cap {
+  position: relative;
+}
+
+.drop-lead {
+  position: absolute;
+  right: 100%;
+  top: 0.12em;
+  padding-right: 0.08em;
+  font-family: var(--font-body);
+  font-size: 0.32em;
+  line-height: 1;
+  color: var(--ink);
 }
 
 @keyframes initial-in {
@@ -367,12 +517,15 @@ a {
 }
 
 .tap-hint {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-family: var(--font-caps);
   font-size: 0.8rem;
   letter-spacing: 0.14em;
   color: var(--ink-faint);
   text-align: center;
-  margin: 0.2rem 0 0;
+  margin: 0;
   opacity: 0;
   animation: fade-in 800ms ease 2.4s forwards;
 }
@@ -385,11 +538,23 @@ a {
 
 /* ---------- Sketch ---------- */
 
+/*
+ * A sketch holds its place from the start but stays unseen until it is drawn;
+ * then the frame (if the theme has one) and the drawing arrive together.
+ * data-variant (0-3) varies placement, tilt and the direction it is drawn in.
+ */
 .sketch {
-  width: min(48%, 210px);
+  width: min(48%, 210px, 30cqh);
   aspect-ratio: 1;
   margin: 0 auto 0.8rem;
   position: relative;
+  break-inside: avoid;
+  visibility: hidden;
+}
+
+.sketch[data-shown] {
+  visibility: visible;
+  transition: visibility 0s linear var(--appear, 0ms);
 }
 
 .sketch img {
@@ -400,13 +565,45 @@ a {
   /* url() must stay in the rule: inside a custom property it would resolve against the stylesheet's URL. */
   filter: url(#ink-wobble) var(--sketch-tone, sepia(0.55) contrast(1.15) brightness(0.96));
   opacity: var(--sketch-opacity, 0.88);
+  /* Where the pen starts: the clip it is drawn out of. */
   clip-path: inset(0 100% 0 0);
-  animation: draw-in 1800ms ease-out forwards;
+}
+
+.sketch[data-variant='1'] img {
+  clip-path: inset(0 0 100% 0);
+}
+
+.sketch[data-variant='2'] img {
+  clip-path: inset(0 0 0 100%);
+}
+
+.sketch[data-variant='3'] img {
+  clip-path: inset(50% 50% 50% 50%);
+}
+
+.sketch[data-shown] img {
+  animation: draw-in 1800ms ease-out both;
+  animation-delay: var(--appear, 0ms);
 }
 
 @keyframes draw-in {
   to {
     clip-path: inset(0 0 0 0);
+  }
+}
+
+/* Where there is room, some sketches sit to one side with the words running round them. */
+@container (min-width: 440px) {
+  .sketch[data-variant='1'] {
+    float: left;
+    width: min(40%, 190px, 30cqh);
+    margin: 0.3rem 1.2rem 0.6rem 0;
+  }
+
+  .sketch[data-variant='2'] {
+    float: right;
+    width: min(40%, 190px, 30cqh);
+    margin: 0.3rem 0 0.6rem 1.2rem;
   }
 }
 
@@ -429,19 +626,26 @@ a {
   gap: 0.35rem;
 }
 
-.choices-enter {
+/* Choices and endings hold their place on the sheet from the start, and appear when the text is read. */
+.after-text {
+  visibility: hidden;
+  break-inside: avoid;
+}
+
+.after-text.shown {
+  visibility: visible;
   animation: rise-in 700ms ease both;
 }
 
-.choices-enter > li {
+.after-text.shown li {
   animation: rise-in 600ms ease both;
 }
 
-.choices-enter > li:nth-child(2) {
+.after-text.shown li:nth-child(2) {
   animation-delay: 180ms;
 }
 
-.choices-enter > li:nth-child(3) {
+.after-text.shown li:nth-child(3) {
   animation-delay: 360ms;
 }
 
@@ -546,13 +750,12 @@ a {
 /* ---------- Quill (waiting for the page to be written) ---------- */
 
 .quill-wait {
-  flex: 1;
+  height: 100cqh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 1rem;
-  min-height: 50vh;
   color: var(--ink-soft);
   text-align: center;
 }
@@ -615,11 +818,26 @@ a {
 
 /* ---------- Ribbon bookmark (menu) ---------- */
 
-.ribbon {
+.ribbons {
   position: absolute;
   top: 0;
   right: 18px;
   z-index: 5;
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+@media (min-width: 700px) {
+  .ribbons {
+    right: 28px;
+  }
+}
+
+.ribbon {
+  position: relative;
+  top: 0;
   width: 30px;
   height: 64px;
   display: grid;
@@ -634,9 +852,37 @@ a {
   font-size: 0.72rem;
 }
 
-@media (min-width: 700px) {
-  .ribbon {
-    right: 28px;
+button.ribbon {
+  border: none;
+  cursor: pointer;
+  font: inherit;
+}
+
+/* The sound ribbon is a shade darker, and hangs lower while it is pulled on. */
+.sound-ribbon {
+  height: 52px;
+  background: linear-gradient(to right, var(--ribbon-a), color-mix(in srgb, var(--ribbon-b) 70%, black) 45%, var(--ribbon-a));
+  transition: height 300ms ease;
+}
+
+.sound-ribbon[aria-pressed='true'],
+.menu-ribbon[aria-pressed='true'] {
+  height: 76px;
+}
+
+.menu-ribbon {
+  transition: height 300ms ease;
+}
+
+/* While the narrator speaks, the ribbon sways a little. */
+.sound-ribbon[data-speaking] {
+  animation: ribbon-sway 2.4s ease-in-out infinite;
+  transform-origin: top center;
+}
+
+@keyframes ribbon-sway {
+  50% {
+    transform: rotate(2.5deg);
   }
 }
 
@@ -701,7 +947,12 @@ a {
 }
 
 .config-input {
+  display: block;
   width: 100%;
+  resize: none;
+  overflow: hidden;
+  line-height: 1.3;
+  field-sizing: content;
   background: transparent;
   border: none;
   border-bottom: 1px solid color-mix(in srgb, var(--ink-soft) 50%, transparent);
@@ -738,6 +989,15 @@ a {
   background: color-mix(in srgb, var(--rubric) 10%, transparent);
 }
 
+.label-note {
+  font-family: var(--font-body);
+  font-style: italic;
+  letter-spacing: 0;
+  text-transform: none;
+  font-size: 0.95em;
+  color: var(--ink-faint);
+}
+
 .tones {
   display: flex;
   flex-wrap: wrap;
@@ -756,7 +1016,8 @@ a {
   min-height: 38px;
 }
 
-.tone[aria-pressed='true'] {
+.tone[aria-pressed='true'],
+.tone[aria-checked='true'] {
   border-color: var(--rubric);
   background: color-mix(in srgb, var(--rubric) 12%, transparent);
   color: var(--rubric);
@@ -854,11 +1115,16 @@ a {
   }
 }
 
-.form-error {
-  color: var(--rubric);
+.form-status {
+  min-height: 1.5em;
+  color: var(--ink-soft);
   text-align: center;
   font-style: italic;
   margin: 0.4rem 0 0;
+}
+
+.form-status.form-error {
+  color: var(--rubric);
 }
 
 .contents {
@@ -908,8 +1174,9 @@ a {
 }
 
 .colophon {
-  margin-top: auto;
-  padding-top: 1.4rem;
+  flex: none;
+  margin: 0;
+  padding-top: 1rem;
   text-align: center;
   font-family: var(--font-caps);
   letter-spacing: 0.1em;
@@ -918,10 +1185,16 @@ a {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .sound-ribbon[data-speaking] {
+    animation: none;
+  }
+
   .word,
+  .sketch,
   .sketch img,
-  .choices-enter,
-  .choices-enter > li,
+  .sketch::after,
+  .after-text.shown,
+  .after-text.shown li,
   .leaf.turning,
   .leaf.turning::after,
   .leaf.under.shadowed::after {
@@ -950,10 +1223,14 @@ a {
 /* ---------- Theme picker ---------- */
 
 .theme-picker {
+  flex: 1 1 auto;
+  min-height: 0;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 0.6rem;
-  margin: 0 0 1.8rem;
+  align-content: center;
+  gap: 0.7rem;
+  margin: 0;
+  padding: 4px;
 }
 
 .theme-tile {
@@ -980,6 +1257,7 @@ a {
 /* A miniature desk: resets the full-screen sizing, keeps the theme's colours and type. */
 .desk.theme-sample {
   display: block;
+  height: auto;
   min-height: 0;
   border-radius: 6px;
   padding: 5px;
@@ -1024,4 +1302,707 @@ a {
 /* An odd tile out spans the row instead of sitting alone. */
 .theme-tile:last-child:nth-child(odd) {
   grid-column: 1 / -1;
+}
+
+/* ---------- Title sheets ---------- */
+
+.cover-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.cover-menu {
+  margin-top: 0.4rem;
+}
+
+.cover-menu .choice-turn {
+  font-size: 0.9rem;
+}
+
+.begin-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  /* safe: when long answers fill the sheet, start from the top rather than spilling over the heading. */
+  justify-content: safe center;
+}
+
+.contents li {
+  break-inside: avoid;
+}
+
+/* Short screens (small phones, landscape): tighten so every sheet still fits. */
+@media (max-height: 700px) {
+  .config-row label {
+    margin-bottom: -0.45rem;
+  }
+
+  .config-input {
+    font-size: 1.08rem;
+    padding: 0.25rem 0 0.2rem;
+  }
+
+  .tone {
+    min-height: 32px;
+    padding: 0.2rem 0.7rem;
+    font-size: 0.95rem;
+  }
+
+  .dice-button svg {
+    width: 40px;
+    height: 40px;
+  }
+
+  .book-title {
+    font-size: clamp(1.8rem, 8vw, 2.4rem);
+  }
+
+  .book-subtitle {
+    margin-bottom: 0.8rem;
+  }
+
+  .config-row {
+    margin-bottom: 0.5rem;
+  }
+
+  .begin-row {
+    margin: 0.8rem 0 0.2rem;
+  }
+
+  .seal {
+    width: 76px;
+    height: 76px;
+  }
+
+  .theme-sample-page {
+    min-height: 62px;
+    padding: 0.45rem 0.5rem;
+  }
+
+  .folio {
+    margin-bottom: 0.8rem;
+  }
+}
+
+/*
+ * "Simple page turns" in settings: the page fades instead of turning, and nothing
+ * drifts or draws itself. Words still appear at the reader's chosen pace.
+ */
+/* Forward, the old page on top fades away; backward, the earlier page fades in on top. */
+html[data-motion='reduced'] .leaf.turning.forward {
+  animation: simple-out 260ms ease forwards !important;
+}
+
+html[data-motion='reduced'] .leaf.turning.backward {
+  animation: simple-in 260ms ease forwards !important;
+}
+
+html[data-motion='reduced'] .leaf.turning::after,
+html[data-motion='reduced'] .leaf.under.shadowed::after {
+  display: none;
+}
+
+html[data-motion='reduced'] .sketch,
+html[data-motion='reduced'] .sketch img,
+html[data-motion='reduced'] .sketch::after,
+html[data-motion='reduced'] .sound-ribbon {
+  animation-duration: 1ms !important;
+  animation-iteration-count: 1 !important;
+}
+
+html[data-motion='reduced'] .word {
+  filter: none;
+  animation-duration: 120ms !important;
+}
+
+@keyframes simple-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes simple-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* ---------- A story's cover ---------- */
+
+.story-cover {
+  text-align: center;
+}
+
+.cover-kicker {
+  margin: 0.4rem 0 0;
+  color: var(--rubric);
+  font-size: 1.3rem;
+}
+
+.cover-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(1.6rem, 8vw, 2.4rem);
+  line-height: 1.1;
+  margin: 0.3rem 0 0.6rem;
+  /* Clear of the ribbons in the corner. */
+  padding: 0 52px;
+  color: var(--ink);
+}
+
+.cover-premise {
+  font-style: italic;
+  color: var(--ink-soft);
+  font-size: 1.08rem;
+  line-height: 1.45;
+  margin: 0 auto 0.6rem;
+  max-width: 26em;
+}
+
+/* A summary that reads itself aloud: a quiet hint of a link, and ink while it speaks. */
+.cover-premise.readable {
+  cursor: pointer;
+  border-radius: 4px;
+  transition: color 0.3s ease;
+}
+
+.cover-premise.readable:focus-visible {
+  outline: 2px solid var(--rubric);
+  outline-offset: 3px;
+}
+
+.cover-premise.readable[data-state='loading'] {
+  animation: premise-waiting 1.2s ease-in-out infinite alternate;
+}
+
+.cover-premise.readable[data-state='playing'] {
+  color: var(--ink);
+}
+
+@keyframes premise-waiting {
+  to {
+    opacity: 0.55;
+  }
+}
+
+/* The map takes whatever room is left, and the tree shrinks to fit it; the way in never gets pushed off. */
+.cover-map {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+}
+
+.story-cover > :not(.cover-map) {
+  flex-shrink: 0;
+}
+
+@media (max-height: 740px) {
+  .cover-kicker {
+    display: none;
+  }
+
+  .cover-title {
+    font-size: clamp(1.4rem, 6.5vw, 1.9rem);
+    margin: 0 0 0.4rem;
+  }
+
+  .cover-premise {
+    font-size: 0.98rem;
+    line-height: 1.38;
+    margin-bottom: 0.4rem;
+  }
+
+  .voice-panel .voice-direction {
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    font-size: 0.82rem;
+  }
+
+  .tree-legend {
+    font-size: 0.64rem;
+    margin-top: 0.2rem;
+  }
+}
+
+.cover-cost {
+  flex: none;
+  margin: 0.2rem 0 0;
+  font-family: var(--font-caps);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+}
+
+.cover-begin {
+  flex: none;
+  text-align: center;
+}
+
+.cover-begin .choice-turn {
+  justify-content: center;
+}
+
+.story-tree {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  min-height: 0;
+}
+
+.story-tree svg {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  overflow: visible;
+}
+
+.tree-edge {
+  fill: none;
+  stroke: var(--ink-faint);
+  stroke-width: 1.4;
+  opacity: 0.7;
+}
+
+.tree-edge.unwritten {
+  stroke-dasharray: 2 3;
+  opacity: 0.45;
+}
+
+.tree-edge.yours {
+  stroke: var(--rubric);
+  stroke-width: 2;
+  opacity: 1;
+}
+
+.tree-node.written circle,
+.tree-node.written rect {
+  fill: var(--ink-soft);
+}
+
+.tree-node.unwritten circle,
+.tree-node.unwritten rect {
+  fill: none;
+  stroke: var(--ink-faint);
+  stroke-width: 1.2;
+  stroke-dasharray: 2 2;
+}
+
+.tree-node.yours circle:not(.tree-hit),
+.tree-node.yours rect {
+  fill: var(--rubric);
+  stroke: var(--paper-edge, rgba(255, 255, 255, 0.6));
+  stroke-width: 1.2;
+}
+
+.tree-node.yours {
+  cursor: pointer;
+  outline: none;
+}
+
+.tree-node.yours:focus-visible circle:not(.tree-hit) {
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+
+.tree-hit {
+  fill: transparent;
+}
+
+.tree-legend {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.3rem 0.9rem;
+  margin-top: 0.4rem;
+  font-family: var(--font-caps);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+}
+
+.tree-legend .key {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-right: 0.2rem;
+  vertical-align: -1px;
+}
+
+.tree-legend .key.yours {
+  background: var(--rubric);
+}
+
+.tree-legend .key.written {
+  background: var(--ink-soft);
+}
+
+.tree-legend .key.unwritten {
+  border: 1.2px dashed var(--ink-faint);
+}
+
+.tree-legend .key.ending {
+  border-radius: 0;
+  transform: rotate(45deg) scale(0.85);
+  background: var(--ink-soft);
+}
+
+/* ---------- Settings ---------- */
+
+.settings-sheet .section-heading {
+  /* Clear of the ribbons. */
+  padding: 0 84px;
+}
+
+.settings-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: safe center;
+  gap: 0.55rem;
+}
+
+/* Label and choices share a line when they fit, and wrap under it when they do not. */
+.setting-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.2rem 0.8rem;
+}
+
+.setting-row .setting-label {
+  display: block;
+  font-family: var(--font-caps);
+  letter-spacing: 0.12em;
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+  margin-bottom: 0.1rem;
+}
+
+.settings-exits {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-credits {
+  flex: none;
+  margin: 0.3rem 0 0;
+  text-align: center;
+  font-family: var(--font-caps);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+}
+
+.settings-credits a {
+  color: var(--ink-faint);
+}
+
+.settings-exits .choice {
+  min-height: 48px;
+  padding: 0.45rem 0.25rem;
+}
+
+/* ---------- The library: title pages, the shelf and settings, in no particular book's style ---------- */
+
+.desk[data-theme='library'] {
+  --ink: #26221e;
+  --ink-soft: #5b544c;
+  --ink-faint: #8e867b;
+  --rubric: #3b6a72;
+  --parchment: #f2ede3;
+  --desk: #181716;
+  --desk-image: radial-gradient(ellipse at 50% 35%, rgba(70, 90, 95, 0.35), transparent 70%);
+  --page-glow: rgba(255, 255, 255, 0.12);
+  --page-shadow-edge: rgba(20, 20, 20, 0.35);
+  --under-shadow: rgba(10, 10, 10, 0.3);
+  --ribbon-a: #264a50;
+  --ribbon-b: #3b6a72;
+  --ribbon-ink: #e8f0ef;
+  --font-body: 'Cormorant Garamond', Georgia, serif;
+  --font-caps: 'Cinzel', 'Cormorant Garamond', Georgia, serif;
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+}
+
+.desk[data-theme='library'] .leaf.paper {
+  background-color: #f2ede3;
+  background-image:
+    radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.6), transparent 60%),
+    radial-gradient(ellipse at 50% 110%, rgba(59, 106, 114, 0.08), transparent 55%);
+  background-size: auto;
+  box-shadow: inset 0 0 60px rgba(60, 50, 40, 0.12);
+}
+
+.desk[data-theme='library'] .book-title {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  font-size: clamp(2.4rem, 11vw, 3.4rem);
+}
+
+.desk[data-theme='library'] .section-heading,
+.desk[data-theme='library'] .choice-turn,
+.desk[data-theme='library'] .colophon,
+.desk[data-theme='library'] .setting-label,
+.desk[data-theme='library'] .contents-theme {
+  font-size: 0.8em;
+  letter-spacing: 0.14em;
+}
+
+.desk[data-theme='library'] .choice-text,
+.desk[data-theme='library'] .contents-line {
+  font-weight: 500;
+}
+
+/* ---------- Who reads the tale: on the cover, until anything is recorded ---------- */
+
+.voice-panel {
+  flex: none;
+  margin: 0 auto 0.4rem;
+  max-width: 26rem;
+  text-align: left;
+}
+
+.voice-panel .setting-label {
+  display: block;
+  font-family: var(--font-caps);
+  letter-spacing: 0.12em;
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  margin-bottom: 0.25rem;
+}
+
+.voice-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.8rem;
+  align-items: center;
+}
+
+.voice-option,
+.voice-suggested {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.voice-option .tone {
+  min-height: 32px;
+  padding: 0.2rem 0.75rem;
+  font-size: 0.95rem;
+}
+
+.voice-play {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--ink-soft) 40%, transparent);
+  background: none;
+  color: var(--rubric);
+  cursor: pointer;
+}
+
+.voice-play[data-state='loading'] {
+  animation: voice-wait 1s ease-in-out infinite;
+}
+
+@keyframes voice-wait {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.voice-new {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-caps);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: var(--rubric);
+  padding: 0.3rem 0.2rem;
+  min-height: 32px;
+}
+
+.voice-new:disabled {
+  color: var(--ink-faint);
+  cursor: progress;
+}
+
+.voice-direction {
+  margin: 0.3rem 0 0;
+  font-style: italic;
+  font-size: 0.88rem;
+  line-height: 1.35;
+  color: var(--ink-faint);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+}
+
+.voice-locked {
+  flex: none;
+  margin: 0 0 0.4rem;
+  font-family: var(--font-caps);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+}
+
+/* ---------- Settings: an interface, not a page of the book ---------- */
+
+.settings-sheet {
+  --ui-font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+}
+
+.desk .leaf .settings-sheet .section-heading {
+  font-family: var(--ui-font);
+  font-weight: 600;
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-shadow: none;
+}
+
+.desk .leaf .settings-sheet .setting-label {
+  font-family: var(--ui-font);
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink);
+}
+
+.segmented {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 2px;
+  padding: 2px;
+  margin-left: auto;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.desk .leaf .segment {
+  min-height: 32px;
+  padding: 0.3rem 0.75rem;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--ui-font);
+  font-size: 0.82rem;
+  font-weight: 500;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  text-shadow: none;
+  color: var(--ink-soft);
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.desk .leaf .segment[aria-checked='true'] {
+  background: var(--rubric);
+  color: var(--on-rubric, #fff);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.desk .leaf .settings-exits .choice {
+  border-bottom-color: color-mix(in srgb, var(--ink) 12%, transparent);
+}
+
+.desk .leaf .settings-exits .choice-text {
+  font-family: var(--ui-font);
+  font-style: normal;
+  font-weight: 500;
+  font-size: 0.98rem;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.desk .leaf .settings-exits .choice-turn {
+  font-family: var(--ui-font);
+  font-size: 0.78rem;
+  letter-spacing: 0;
+  text-transform: none;
+  text-shadow: none;
+}
+
+.desk .leaf .settings-credits {
+  font-family: var(--ui-font);
+  letter-spacing: 0;
+}
+
+/* ---------- The shelf: each tale's title in a touch of its own book's style ---------- */
+
+.contents-title {
+  --kind: var(--ink);
+  color: var(--kind);
+}
+
+.contents-title[data-kind='historic-fantasy'],
+.contents-theme[data-kind='historic-fantasy'] {
+  --kind: #7a2414;
+  font-family: 'IM Fell English', Georgia, serif;
+}
+
+.contents-title[data-kind='future'],
+.contents-theme[data-kind='future'] {
+  --kind: #1b6b80;
+  font-family: 'Exo 2', system-ui, sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.contents-title[data-kind='noir'],
+.contents-theme[data-kind='noir'] {
+  --kind: #2a2927;
+  font-family: 'Special Elite', 'Courier Prime', monospace;
+}
+
+.contents-title[data-kind='pirate'],
+.contents-theme[data-kind='pirate'] {
+  --kind: #5a3a18;
+  font-family: 'Pirata One', Georgia, serif;
+  letter-spacing: 0.02em;
+}
+
+.contents-title[data-kind='ancient'],
+.contents-theme[data-kind='ancient'] {
+  --kind: #8a3b20;
+  font-family: 'Cinzel', Georgia, serif;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.contents-title[data-kind='dream'],
+.contents-theme[data-kind='dream'] {
+  --kind: #6a4c93;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-style: italic;
+  font-weight: 600;
+}
+
+.contents-title[data-kind='ancient'] {
+  font-size: 0.92em;
+}
+
+.contents-title[data-kind='pirate'] {
+  font-size: 1.08em;
+}
+
+.desk .contents-theme[data-kind] {
+  color: var(--kind);
 }

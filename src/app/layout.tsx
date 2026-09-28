@@ -23,6 +23,7 @@ import '@fontsource/cormorant-garamond/500-italic.css'
 import '@fontsource/cormorant-garamond/600.css'
 import '@fontsource/cormorant-garamond/600-italic.css'
 import '@fontsource/poiret-one/400.css'
+import { APPLY_SETTINGS_SCRIPT } from '@/components/settingsScript'
 import './globals.css'
 import './themes/future.css'
 import './themes/noir.css'
@@ -44,7 +45,11 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    // The settings script sets text size and motion before hydration, so React should not complain about them.
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: APPLY_SETTINGS_SCRIPT }} />
+      </head>
       <body>
         {/* Roughens clean lines so sketches look drawn with a dip pen. */}
         <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden>

@@ -109,6 +109,47 @@
     inset 0 0 22px rgba(80, 30, 5, 0.35);
 }
 
+.desk[data-theme='ancient'] .sketch img {
+  clip-path: none;
+  transform: rotate(var(--tilt, 0deg));
+}
+
+.desk[data-theme='ancient'] .sketch[data-variant='1'] {
+  --tilt: -7deg;
+}
+
+.desk[data-theme='ancient'] .sketch[data-variant='2'] {
+  --tilt: 6deg;
+}
+
+.desk[data-theme='ancient'] .sketch[data-variant='3'] {
+  --tilt: -3deg;
+}
+
+/* Disc and figure are pressed on together, like a seal into clay. */
+.desk[data-theme='ancient'] .sketch[data-shown] {
+  animation: seal-press 700ms cubic-bezier(0.3, 0.7, 0.4, 1) both;
+  animation-delay: var(--appear, 0ms);
+}
+
+.desk[data-theme='ancient'] .sketch[data-shown] img {
+  animation: none;
+}
+
+@keyframes seal-press {
+  0% {
+    opacity: 0;
+    transform: scale(1.35) rotate(-14deg);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(0.95);
+  }
+  100% {
+    transform: none;
+  }
+}
+
 .desk[data-theme='ancient'] .fleuron {
   font-size: 1.3rem;
   letter-spacing: 0.4em;

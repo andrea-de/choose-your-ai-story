@@ -133,3 +133,61 @@
   border-color: rgba(0, 0, 0, 0.5);
   box-shadow: 0 1px 0 rgba(255, 230, 190, 0.15);
 }
+
+/* Sketches bleed into the chart like ink soaking into paper, from a different spot each time. */
+.desk[data-theme='pirate'] .sketch img {
+  clip-path: circle(0% at 50% 50%);
+}
+
+.desk[data-theme='pirate'] .sketch[data-shown] img {
+  animation: ink-bleed 1600ms ease-out both;
+  animation-delay: var(--appear, 0ms);
+}
+
+.desk[data-theme='pirate'] .sketch[data-variant='1'][data-shown] img {
+  animation-name: ink-bleed-corner;
+}
+
+.desk[data-theme='pirate'] .sketch[data-variant='2'][data-shown] img {
+  animation-name: ink-bleed-low;
+}
+
+.desk[data-theme='pirate'] .sketch[data-variant='3'][data-shown] img {
+  animation-name: ink-bleed-side;
+}
+
+@keyframes ink-bleed {
+  from {
+    clip-path: circle(0% at 50% 50%);
+  }
+  to {
+    clip-path: circle(75% at 50% 50%);
+  }
+}
+
+@keyframes ink-bleed-corner {
+  from {
+    clip-path: circle(0% at 15% 20%);
+  }
+  to {
+    clip-path: circle(120% at 15% 20%);
+  }
+}
+
+@keyframes ink-bleed-low {
+  from {
+    clip-path: circle(0% at 60% 90%);
+  }
+  to {
+    clip-path: circle(110% at 60% 90%);
+  }
+}
+
+@keyframes ink-bleed-side {
+  from {
+    clip-path: circle(0% at 90% 40%);
+  }
+  to {
+    clip-path: circle(110% at 90% 40%);
+  }
+}

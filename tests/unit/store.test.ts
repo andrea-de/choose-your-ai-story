@@ -8,7 +8,7 @@ import type { PageNode, Story } from '@/lib/story/types'
 const story: Story = {
   id: 'abc',
   config: { theme: 'historic-fantasy', hero: 'h', setting: 's', tone: 't' },
-  bible: { title: 'T', premise: 'P', world: 'W', characters: [{ name: 'n', description: 'd' }], rules: ['r'] },
+  bible: { title: 'T', premise: 'P', heart: 'H', goal: 'G', danger: 'D', world: 'W', characters: [{ name: 'n', description: 'd' }], rules: ['r'] },
   seed: 1,
   createdAt: 5,
   firstPage: 1,
@@ -107,6 +107,19 @@ describe('MemoryStore', () => {
     expect(img!.mimeType).toBe('image/png')
     expect([...img!.data]).toEqual([1, 2, 3])
     expect(await second.getIllustration('abc', 2)).toBeNull()
+  })
+
+  it('keeps narrations apart from illustrations, on disk too', async () => {
+    const dir = await tempDir()
+    const first = new MemoryStore(dir)
+    await first.createStory(story, page(1))
+    await first.saveNarration('abc', 1, { mimeType: 'audio/wav', data: new Uint8Array([9, 8]) })
+    expect(await first.getIllustration('abc', 1)).toBeNull()
+    const second = new MemoryStore(dir)
+    const audio = await second.getNarration('abc', 1)
+    expect(audio!.mimeType).toBe('audio/wav')
+    expect([...audio!.data]).toEqual([9, 8])
+    expect(await second.getIllustration('abc', 1)).toBeNull()
   })
 
   it('resets pages that were mid-generation when the server stopped', async () => {

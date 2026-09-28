@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import { biblePrompt, illustrationPrompt, pagePrompt, type PageRequest } from '@/lib/story/prompts'
+import { HOUSE_STYLE, biblePrompt, illustrationPrompt, pagePrompt, type PageRequest } from '@/lib/story/prompts'
 import { bibleSchema, newStoryRequestSchema, pageDraftJsonSchema, pageDraftSchema } from '@/lib/story/schema'
 import { historicFantasy } from '@/lib/themes'
 
 const bible = {
   title: 'The Salt Crown',
   premise: 'A crown lies under the marsh.',
+  heart: 'Your sister, lost in the marsh last spring.',
+  goal: 'Find the crown before the thaw.',
+  danger: 'The reeve wants it for himself.',
   world: 'A drowned kingdom of reeds and bells.',
   characters: [{ name: 'Isolde Vane', description: 'A ferrywoman who never smiles.' }],
   rules: ['The marsh gives nothing back for free.'],
@@ -30,7 +33,13 @@ describe('biblePrompt', () => {
     expect(prompt).toContain('a falconer')
     expect(prompt).toContain('a salt marsh')
     expect(prompt).toContain('eerie')
-    expect(prompt).toContain('illuminated storybook')
+    expect(prompt).toContain('fireside adventure')
+    expect(prompt).toContain('one clear goal')
+  })
+
+  it('asks for names with the given initials, to keep them fresh', () => {
+    expect(biblePrompt(base.config, historicFantasy, { nameInitials: ['T', 'G'] })).toContain('these letters, one each, in any order: T, G.')
+    expect(biblePrompt(base.config, historicFantasy)).not.toContain('these letters')
   })
 })
 
@@ -42,6 +51,14 @@ describe('pagePrompt', () => {
     expect(prompt).toContain('Isolde Vane')
     expect(prompt).toContain('The marsh gives nothing back for free.')
     expect(prompt).toContain('No facts have been established yet')
+  })
+
+  it('holds every page to the house style, and to the hero’s goal and danger', () => {
+    const prompt = pagePrompt(base)
+    expect(prompt).toContain(HOUSE_STYLE)
+    expect(prompt).toContain("The hero's goal: Find the crown before the thaw.")
+    expect(prompt).toContain('What stands in the way: The reeve wants it for himself.')
+    expect(prompt).toContain('Never two ways of simply going somewhere')
   })
 
   it('carries the path, the choice and the facts with their ids', () => {
@@ -105,6 +122,7 @@ describe('schemas', () => {
       retiredFactIds: [],
       endingTitle: '',
       sketch: 'door',
+      mood: 'suspense',
       illustrationPrompt: 'a fogbound gate',
     })
     expect(draft.choices).toHaveLength(2)
