@@ -3,10 +3,11 @@ import path from 'node:path'
 import { sketchIds, type SketchId } from '../sketches'
 import type { Theme } from '../themes'
 import type { PageDraft } from '../story/schema'
-import type { PageRequest } from '../story/prompts'
+import type { PageRequest, VoiceRequest } from '../story/prompts'
 import type { StoryBible, StoryConfig, ThemeId } from '../story/types'
 import { createRng, hashString, pick } from '../story/random'
-import type { Illustration, StoryTeller } from './types'
+import { isMood, moods, type NarrationRequest, type VoiceSuggestion } from '../voices'
+import { SPEECH_SAMPLE_RATE, type Illustration, type StoryTeller } from './types'
 
 /**
  * A storyteller that needs no network: stitches passages together from a
@@ -24,6 +25,9 @@ export class MockStoryTeller implements StoryTeller {
     return {
       title: `The ${pick(book.titleNouns, rng)} of ${pick(book.titlePlaces, rng)}`,
       premise: `You are ${config.hero}, in ${config.setting}. ${book.premiseHook}`,
+      heart: 'Your little brother, who is counting on you to come home.',
+      goal: 'Find out who is behind the trouble and stop them.',
+      danger: 'A rival who wants the same prize.',
       world: `A ${config.tone} world where ${config.setting} keeps its secrets close.`,
       characters: [
         { name: pick(book.names, rng), description: 'A wary ally who knows more than they say.' },
@@ -51,6 +55,7 @@ export class MockStoryTeller implements StoryTeller {
       retiredFactIds: req.facts.length > 2 ? [req.facts[0].id] : [],
       endingTitle: req.mustEnd ? pick(book.endingTitles, rng) : '',
       sketch,
+      mood: req.mustEnd ? 'triumph' : pick(moods, rng),
       illustrationPrompt: `a ${sketch}`,
     }
   }
@@ -61,6 +66,41 @@ export class MockStoryTeller implements StoryTeller {
     const id = sketchIds.find((k) => subject.includes(k)) ?? sketchIds[hashString(subject) % sketchIds.length]
     const data = await readFile(path.join(process.cwd(), 'public', 'sketches', `${id}.svg`))
     return { mimeType: 'image/svg+xml', data: new Uint8Array(data) }
+  }
+
+  /** A soft hum as long as the page would take to read, streamed a quarter-second at a time. */
+  async *narrate({ text, mood }: NarrationRequest): AsyncIterable<Uint8Array> {
+    await this.wait()
+    const rate = SPEECH_SAMPLE_RATE
+    const words = text.split(/\s+/).filter(Boolean).length
+    const seconds = Math.min(60, Math.max(2, words / 2.6))
+    const pitch = isMood(mood) ? 180 + moods.indexOf(mood) * 20 : 200
+    const total = Math.round(seconds * rate)
+    const chunk = rate / 4
+    for (let start = 0; start < total; start += chunk) {
+      const samples = new Int16Array(Math.min(chunk, total - start))
+      for (let j = 0; j < samples.length; j++) {
+        const i = start + j
+        // A breath every two seconds stands in for the gaps between sentences.
+        const gap = i % (rate * 2) > rate * 1.7
+        samples[j] = gap ? 0 : Math.round(Math.sin((2 * Math.PI * pitch * i) / rate) * 0.04 * 32767)
+      }
+      yield new Uint8Array(samples.buffer)
+      // Faster than real time, like the real model.
+      await new Promise((r) => setTimeout(r, 5))
+    }
+  }
+
+  /** Offers a few canned narrators in turn, never one already suggested. */
+  async suggestVoice(request: VoiceRequest): Promise<VoiceSuggestion> {
+    await this.wait()
+    const ideas: VoiceSuggestion[] = [
+      { label: 'Nervous apprentice', voice: 'leda', style: 'quick, breathless, earnest', treatment: 'none' },
+      { label: 'Grand old actor', voice: 'gacrux', style: 'rich, theatrical, savouring', treatment: 'none' },
+      { label: 'Fireside grandmother', voice: 'en-ie-storyteller-6', style: 'warm, amused, unhurried', treatment: 'none' },
+    ]
+    const used = new Set(request.previous.map((p) => p.label))
+    return ideas.find((i) => !used.has(i.label)) ?? ideas[request.previous.length % ideas.length]
   }
 
   private wait() {

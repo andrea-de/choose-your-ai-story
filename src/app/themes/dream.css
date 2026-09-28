@@ -1,6 +1,8 @@
 /* Dreamscape: a twilight sky with a drifting aurora; text surfaces from blur; pages dissolve into each other. */
 
 .desk[data-theme='dream'] {
+  /* Text on the accent colour: dark, since this accent is light. */
+  --on-rubric: #1b1030;
   --ink: #eee8ff;
   --ink-soft: #bdb2e6;
   --ink-faint: #8e84bd;
@@ -46,17 +48,45 @@
   pointer-events: none;
 }
 
+/* Moving only: an animated hue-rotate here repainted the whole sky on every frame. */
 @keyframes aurora {
   0% {
     transform: translate(0, 0) rotate(0deg);
-    filter: hue-rotate(0deg);
   }
   50% {
     transform: translate(4%, -3%) rotate(4deg);
   }
   100% {
     transform: translate(-3%, 4%) rotate(-3deg);
-    filter: hue-rotate(35deg);
+  }
+}
+
+/* The sky's colour shift, as a tint that fades in and out over it instead. */
+.desk[data-theme='dream'] .book::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 30% 20%, rgba(80, 200, 255, 0.16), transparent 60%),
+    radial-gradient(ellipse at 75% 80%, rgba(255, 110, 200, 0.14), transparent 55%);
+  opacity: 0;
+  will-change: opacity;
+  animation: aurora-tint 36s ease-in-out infinite alternate;
+}
+
+/* Pages above the sky's tint, and a turning page above the one beneath it. */
+.desk[data-theme='dream'] .leaf {
+  z-index: 1;
+}
+
+.desk[data-theme='dream'] .leaf.turning {
+  z-index: 2;
+}
+
+@keyframes aurora-tint {
+  to {
+    opacity: 1;
   }
 }
 
@@ -112,6 +142,9 @@
 
 /* Words surface out of a haze. */
 .desk[data-theme='dream'] .word {
+  /* The base style starts words blurred and animates the blur away; this theme's surfacing
+     uses a glow instead, so the blur must go, or it stays for good. */
+  filter: none;
   animation-name: surface;
   animation-duration: 1100ms;
 }
@@ -126,20 +159,22 @@
   animation-duration: 1400ms;
 }
 
+/* A haze of glow that clears, rather than a blur filter on every word. */
 @keyframes surface {
   0% {
     opacity: 0;
-    filter: blur(7px);
-    color: var(--rubric);
+    color: transparent;
+    text-shadow: 0 0 8px var(--rubric);
   }
   60% {
     opacity: 0.8;
-    filter: blur(1px);
+    color: color-mix(in srgb, var(--ink) 60%, transparent);
+    text-shadow: 0 0 3px var(--rubric);
   }
   100% {
     opacity: 1;
-    filter: blur(0);
     color: var(--ink);
+    text-shadow: 0 0 0 transparent;
   }
 }
 
@@ -182,15 +217,42 @@
   filter: invert(1) sepia(0.5) hue-rotate(210deg) saturate(2.4) brightness(1.1) drop-shadow(0 0 8px rgba(210, 180, 255, 0.65));
   -webkit-box-reflect: below 2px linear-gradient(transparent 62%, rgba(255, 255, 255, 0.26));
   clip-path: none;
-  opacity: 0;
-  animation-name: materialize;
-  animation-duration: 2200ms;
+}
+
+.desk[data-theme='dream'] .sketch[data-shown] img {
+  animation: materialize 2200ms ease-out both;
+  animation-delay: var(--appear, 0ms);
+}
+
+/* Each dream drifts differently: slower, the other way, or tilting as it floats. */
+.desk[data-theme='dream'] .sketch[data-variant='1'] {
+  animation-duration: 9s;
+  animation-direction: reverse;
+}
+
+.desk[data-theme='dream'] .sketch[data-variant='2'] {
+  animation-name: float-tilt;
+}
+
+.desk[data-theme='dream'] .sketch[data-variant='3'] {
+  animation-duration: 5.5s;
+}
+
+@keyframes float-tilt {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-2deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(2deg);
+  }
 }
 
 @keyframes materialize {
   from {
     opacity: 0;
     transform: scale(0.9);
+    filter: invert(1) sepia(0.5) hue-rotate(210deg) saturate(2.4) brightness(1.1) blur(8px);
   }
   to {
     opacity: 1;
@@ -257,6 +319,11 @@
   transform-origin: center;
 }
 
+.desk[data-theme='dream'] .leaf.turning,
+.desk[data-theme='dream'] .leaf.under.forward {
+  will-change: transform, opacity;
+}
+
 .desk[data-theme='dream'] .leaf.turning.forward {
   animation-name: dissolve-out;
   animation-duration: 740ms;
@@ -276,10 +343,10 @@
   animation: focus-in 740ms ease forwards;
 }
 
+/* Opacity and scale only: an animated blur repainted the whole page every frame. */
 @keyframes dissolve-out {
   to {
     opacity: 0;
-    filter: blur(14px);
     transform: scale(1.08);
   }
 }
@@ -287,12 +354,10 @@
 @keyframes dissolve-in {
   from {
     opacity: 0;
-    filter: blur(14px);
     transform: scale(0.92);
   }
   to {
     opacity: 1;
-    filter: none;
     transform: none;
   }
 }
@@ -300,11 +365,11 @@
 @keyframes focus-in {
   from {
     opacity: 0;
-    filter: blur(10px);
+    transform: scale(1.03);
   }
   to {
     opacity: 1;
-    filter: none;
+    transform: none;
   }
 }
 
@@ -416,4 +481,10 @@
   .desk[data-theme='dream'] .leaf.under.forward {
     animation: none;
   }
+}
+
+.desk[data-theme='dream'] .sound-ribbon[aria-pressed='true'],
+.desk[data-theme='dream'] .menu-ribbon[aria-pressed='true'] {
+  background: rgba(200, 170, 255, 0.28);
+  box-shadow: 0 0 22px rgba(210, 180, 255, 0.75);
 }

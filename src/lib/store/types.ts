@@ -1,4 +1,5 @@
-import type { Illustration } from '../ai/types'
+import type { Usage } from '../ai/pricing'
+import type { Illustration, Narration } from '../ai/types'
 import type { PageNode, Story } from '../story/types'
 
 /**
@@ -20,6 +21,12 @@ export interface StoryStore {
   completePage(storyId: string, page: PageNode, children: PageNode[]): Promise<void>
   failPage(storyId: string, number: number, error: string): Promise<void>
   recordVisit(storyId: string, number: number): Promise<void>
+  /** Changes a story's own record (not its pages). */
+  updateStory(storyId: string, patch: Partial<Story>): Promise<Story | null>
+  /** Adds a model call's usage to the story's running cost. */
+  recordUsage(storyId: string, usage: Usage, at?: number): Promise<void>
   getIllustration(storyId: string, number: number): Promise<Illustration | null>
   saveIllustration(storyId: string, number: number, illustration: Illustration): Promise<void>
+  getNarration(storyId: string, number: number): Promise<Narration | null>
+  saveNarration(storyId: string, number: number, narration: Narration): Promise<void>
 }
