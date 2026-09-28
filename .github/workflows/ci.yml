@@ -1,9 +1,10 @@
 name: CI
 
+# Run by hand only (Actions tab, or `gh workflow run ci.yml`): too many projects
+# share the account's Actions minutes for every push to spend them.
+# Locally, `npm run check` and `npm run test:e2e` cover the same ground.
 on:
-  push:
-    branches: [main]
-  pull_request:
+  workflow_dispatch:
 
 jobs:
   check:
@@ -15,6 +16,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # Narration speed and voice treatments go through ffmpeg; its tests need it.
+      - run: sudo apt-get install -y --no-install-recommends ffmpeg
       - run: npm run typecheck
       - run: npm run lint
       - run: npm test

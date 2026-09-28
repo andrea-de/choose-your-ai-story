@@ -1,12 +1,15 @@
 import 'server-only'
 import { NextResponse } from 'next/server'
 import { ZodError } from 'zod'
-import { GenerationError, PageNotFoundError, StoryNotFoundError } from './story/service'
+import { GenerationError, PageNotFoundError, StoryNotFoundError, VoiceLockedError } from './story/service'
 
 /** Maps service errors to HTTP responses. */
 export function errorResponse(error: unknown): NextResponse {
   if (error instanceof StoryNotFoundError || error instanceof PageNotFoundError) {
     return NextResponse.json({ error: error.message }, { status: 404 })
+  }
+  if (error instanceof VoiceLockedError) {
+    return NextResponse.json({ error: error.message }, { status: 409 })
   }
   if (error instanceof ZodError || error instanceof SyntaxError) {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 })

@@ -1,3 +1,6 @@
+import type { StoryCost } from '../ai/pricing'
+import type { Mood, StoryVoice, VoiceSuggestion } from '../voices'
+
 export type ThemeId = 'historic-fantasy' | 'future' | 'noir' | 'pirate' | 'ancient' | 'dream'
 
 /** What the reader picked (or the dice rolled) on the opening screen. */
@@ -6,6 +9,8 @@ export interface StoryConfig {
   hero: string
   setting: string
   tone: string
+  /** Tales begun before voices were chosen on the cover recorded this instead. */
+  narrator?: 'character' | 'plain'
 }
 
 export interface Character {
@@ -17,6 +22,12 @@ export interface Character {
 export interface StoryBible {
   title: string
   premise: string
+  /** What the hero cares about personally and could lose. */
+  heart: string
+  /** What the hero wants. */
+  goal: string
+  /** Who or what stands in the way. */
+  danger: string
   world: string
   characters: Character[]
   /** Rules the narrator must never break, on any branch. */
@@ -35,6 +46,14 @@ export interface Story {
   /** Page numbers run from 1 to this, handed out at random like a gamebook. */
   pageCount: number
   choicesPerPage: number
+  /** Who reads it aloud, chosen on the cover. Older stories have none; see storyVoice(). */
+  voice?: StoryVoice
+  /** Narrators suggested before, so a new idea is different. */
+  voiceHistory?: VoiceSuggestion[]
+  /** How many new narrator ideas the tale has had (the book's own is the 0th). */
+  voiceIdeas?: number
+  /** What the story has cost in model calls so far. Older stories started without it. */
+  cost?: StoryCost
   /** Pages at depths below this never end the story. */
   minDepth: number
   /** Every page at this depth is an ending. */
@@ -75,6 +94,8 @@ export interface PageNode {
   /** Id of the library sketch the model chose for this page. */
   sketch?: string
   illustrationPrompt?: string
+  /** How the page feels; shifts the narrator's reading. */
+  mood?: Mood
   visits: number
   createdAt: number
 }
@@ -97,7 +118,18 @@ export interface PageView {
   endingTitle?: string
   /** Where the page's sketch is served from, if it has one. */
   sketchUrl?: string
+  /** Where the page's narration is served from, when narration is on. */
+  narrationUrl?: string
   visits: number
+}
+
+/** One page's place in the story's tree, for the map on the cover. No text: the map never spoils. */
+export interface MapNode {
+  number: number
+  parent: number | null
+  /** Someone has turned to it and it has been written. */
+  written: boolean
+  isEnding: boolean
 }
 
 export interface StorySummary {

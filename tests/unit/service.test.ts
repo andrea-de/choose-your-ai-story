@@ -2,9 +2,12 @@ import { describe, expect, it, vi } from 'vitest'
 import { MockStoryTeller } from '@/lib/ai/mock'
 import type { PageRequest } from '@/lib/story/prompts'
 import type { PageDraft } from '@/lib/story/schema'
-import { GenerationError, PageNotFoundError, StoryNotFoundError, toPageView } from '@/lib/story/service'
+import { GenerationError, PageNotFoundError, StoryNotFoundError, toPageView, VoiceLockedError } from '@/lib/story/service'
 import { MemoryStore } from '@/lib/store/memory'
-import { makeService } from './helpers'
+import { wavToPcm } from '@/lib/ai/wav'
+import { concat } from '@/lib/story/recording'
+import { seedSuggestion } from '@/lib/voices'
+import { flush, makeService } from './helpers'
 
 /** A mock teller that records every page request and can be told to misbehave. */
 class SpyTeller extends MockStoryTeller {
@@ -365,5 +368,219 @@ describe('StoryService with sketches off', () => {
     expect((await service.viewPage(story.id, page)).sketchUrl).toBeUndefined()
     await expect(service.getIllustration(story.id, 1)).rejects.toBeInstanceOf(PageNotFoundError)
     expect(draw).not.toHaveBeenCalled()
+  })
+})
+
+describe('StoryService narration', () => {
+  class CountingTeller extends MockStoryTeller {
+    narrations: Parameters<MockStoryTeller['narrate']>[0][] = []
+    narrate(request: Parameters<MockStoryTeller['narrate']>[0]) {
+      this.narrations.push(request)
+      return super.narrate(request)
+    }
+  }
+
+  async function readAll(stream: ReadableStream<Uint8Array>) {
+    const chunks: Uint8Array[] = []
+    const reader = stream.getReader()
+    for (;;) {
+      const { done, value } = await reader.read()
+      if (done) break
+      chunks.push(value)
+    }
+    return concat(chunks)
+  }
+
+  it('streams a page the first time, with its tone and mood, then serves the stored recording', async () => {
+    const teller = new CountingTeller()
+    const { service, store } = makeService({ teller, narration: true })
+    const story = await service.createStory({ theme: 'noir', tone: 'wry' })
+    const page = await service.readPage(story.id, 1)
+    expect((await service.viewPage(story.id, page)).narrationUrl).toBe(`/api/stories/${story.id}/pages/1/narration`)
+
+    const live = await service.listen(story.id, 1)
+    expect(live.durationMs).toBeUndefined()
+    expect(live.sampleRate).toBe(24000)
+    const first = await readAll(live.audio)
+    expect(first.length).toBeGreaterThan(24000)
+    expect(teller.narrations).toHaveLength(1)
+    expect(teller.narrations[0]).toMatchObject({ theme: 'noir', tone: 'wry', mood: page.mood, text: page.text })
+    expect(teller.narrations[0].narrator).toEqual({ kind: 'suggested', suggestion: seedSuggestion('noir') })
+
+    await flush()
+    const stored = await store.getNarration(story.id, 1)
+    expect(stored!.mimeType).toBe('audio/wav')
+    const again = await service.listen(story.id, 1)
+    expect(again.durationMs).toBeCloseTo((first.length / 2 / 24000) * 1000)
+    expect(Buffer.compare(Buffer.from(await readAll(again.audio)), Buffer.from(first))).toBe(0)
+    expect(teller.narrations).toHaveLength(1)
+  })
+
+  it('shares one recording among listeners who arrive while it is being spoken', async () => {
+    const teller = new CountingTeller()
+    const { service } = makeService({ teller, narration: true })
+    const story = await service.createStory()
+    await service.readPage(story.id, 1)
+    const [a, b] = await Promise.all([service.listen(story.id, 1), service.listen(story.id, 1)])
+    const late = await service.listen(story.id, 1)
+    const [x, y, z] = await Promise.all([readAll(a.audio), readAll(b.audio), readAll(late.audio)])
+    expect(teller.narrations).toHaveLength(1)
+    expect(Buffer.compare(Buffer.from(x), Buffer.from(y))).toBe(0)
+    expect(Buffer.compare(Buffer.from(x), Buffer.from(z))).toBe(0)
+  })
+
+  it('hands back the whole narration as a WAV file', async () => {
+    const { service } = makeService({ narration: true })
+    const story = await service.createStory()
+    await service.readPage(story.id, 1)
+    const wav = await service.getNarration(story.id, 1)
+    expect(Buffer.from(wav.data.subarray(0, 4)).toString()).toBe('RIFF')
+    expect(wavToPcm(wav.data).sampleRate).toBe(24000)
+  })
+
+  it('keeps each page’s mood', async () => {
+    const { service } = makeService({ narration: true })
+    const story = await service.createStory()
+    const page = await service.readPage(story.id, 1)
+    expect(page.mood).toBeTruthy()
+  })
+
+  it('offers nothing when narration is off', async () => {
+    const teller = new CountingTeller()
+    const { service } = makeService({ teller })
+    const story = await service.createStory()
+    const page = await service.readPage(story.id, 1)
+    expect((await service.viewPage(story.id, page)).narrationUrl).toBeUndefined()
+    await expect(service.listen(story.id, 1)).rejects.toBeInstanceOf(PageNotFoundError)
+    expect(teller.narrations).toHaveLength(0)
+  })
+
+  it('refuses to narrate a page that is not written yet', async () => {
+    const { service } = makeService({ narration: true })
+    const story = await service.createStory()
+    await expect(service.listen(story.id, 1)).rejects.toBeInstanceOf(PageNotFoundError)
+  })
+
+  it('never records ahead: only pages someone listens to cost anything', async () => {
+    const teller = new CountingTeller()
+    const { service } = makeService({ teller, narration: true })
+    const story = await service.createStory()
+    await service.readPage(story.id, 1)
+    await service.prefetchChoices(story.id, 1)
+    expect(teller.narrations).toHaveLength(0)
+  })
+
+  it('ends a failed recording with an error, stores nothing, and lets the next listener try again', async () => {
+    const teller = new CountingTeller()
+    let fail = true
+    const narrate = teller.narrate.bind(teller)
+    teller.narrate = (request) =>
+      fail
+        ? (async function* () {
+            yield new Uint8Array([1, 2])
+            throw new Error('quota')
+          })()
+        : narrate(request)
+    const { service, store } = makeService({ teller, narration: true })
+    const story = await service.createStory()
+    await service.readPage(story.id, 1)
+    const broken = await service.listen(story.id, 1)
+    await expect(readAll(broken.audio)).rejects.toBeInstanceOf(GenerationError)
+    await flush()
+    expect(await store.getNarration(story.id, 1)).toBeNull()
+    fail = false
+    expect((await readAll((await service.listen(story.id, 1)).audio)).length).toBeGreaterThan(2)
+  })
+})
+
+describe('StoryService.storyMap', () => {
+  it('lists every page’s place in the tree, written or waiting, with no text', async () => {
+    const { service } = makeService()
+    const story = await service.createStory()
+    await service.readPage(story.id, 1)
+    const map = await service.storyMap(story.id)
+    expect(map[0]).toEqual({ number: 1, parent: null, written: true, isEnding: false })
+    expect(map.filter((n) => n.parent === 1)).toHaveLength(story.choicesPerPage)
+    expect(map.every((n) => !('text' in n))).toBe(true)
+    await expect(service.storyMap('nope')).rejects.toBeInstanceOf(StoryNotFoundError)
+  })
+})
+
+describe('StoryService: the tale’s voice', () => {
+  async function readAll(stream: ReadableStream<Uint8Array>) {
+    const reader = stream.getReader()
+    let n = 0
+    for (;;) {
+      const { done, value } = await reader.read()
+      if (done) return n
+      n += value.length
+    }
+  }
+
+  it('starts with the book’s own narrator, suggested and chosen, and open to change', async () => {
+    const { service } = makeService({ narration: true })
+    const story = await service.createStory({ theme: 'future' })
+    const voice = await service.voiceState(story.id)
+    expect(voice).toEqual({ chosen: 'suggested', suggestion: seedSuggestion('future'), locked: false })
+    expect(voice.suggestion.treatment).toBe('robot')
+  })
+
+  it('offers new ideas, each different from the last, and lets the reader choose', async () => {
+    const { service } = makeService({ narration: true })
+    const story = await service.createStory({ theme: 'pirate' })
+    const ideas = []
+    for (let i = 0; i < 4; i++) ideas.push((await service.suggestVoice(story.id)).suggestion)
+    // A person the model casts, then one of the book's treated voices, and round again.
+    expect(ideas.map((i) => i.treatment)).toEqual(['none', 'dream', 'none', 'temple'])
+    expect(ideas[1].label).toBe('Drowned sailor')
+    expect(ideas[3].label).toBe('Ghost captain')
+    expect(new Set(ideas.map((i) => i.label)).size).toBe(4)
+    expect((await service.chooseVoice(story.id, 'standard')).chosen).toBe('standard')
+  })
+
+  it('reads the summary aloud to try a voice, once; hearing it again is free', async () => {
+    const teller = new MockStoryTeller()
+    const spoken: string[] = []
+    const narrate = teller.narrate.bind(teller)
+    teller.narrate = (request) => {
+      spoken.push(request.text)
+      return narrate(request)
+    }
+    const { service } = makeService({ teller, narration: true })
+    const story = await service.createStory({ theme: 'future' })
+    const preview = await service.previewVoice(story.id, 'suggested')
+    expect(preview.treatment).toBe('robot')
+    expect(await readAll(preview.audio)).toBeGreaterThan(0)
+    const again = await service.previewVoice(story.id, 'suggested')
+    expect(again.durationMs).toBeGreaterThan(0)
+    await readAll(again.audio)
+    expect((await service.previewVoice(story.id, 'standard')).treatment).toBe('none')
+    expect(spoken.filter((t) => t === story.bible.premise)).toHaveLength(2)
+  })
+
+  it('fixes the voice when the reader begins the tale, whatever was chosen', async () => {
+    const { service } = makeService({ narration: true })
+    const story = await service.createStory({ theme: 'pirate' })
+    await service.chooseVoice(story.id, 'standard')
+    expect(await service.confirmVoice(story.id)).toMatchObject({ chosen: 'standard', locked: true })
+    expect(await service.confirmVoice(story.id)).toMatchObject({ chosen: 'standard', locked: true })
+    await expect(service.chooseVoice(story.id, 'suggested')).rejects.toBeInstanceOf(VoiceLockedError)
+  })
+
+  it('fixes the voice once a page is read aloud, so the tale sounds alike throughout', async () => {
+    const { service } = makeService({ narration: true })
+    const story = await service.createStory({ theme: 'noir' })
+    await service.readPage(story.id, 1)
+    await readAll((await service.listen(story.id, 1)).audio)
+    expect((await service.voiceState(story.id)).locked).toBe(true)
+    await expect(service.suggestVoice(story.id)).rejects.toBeInstanceOf(VoiceLockedError)
+    await expect(service.chooseVoice(story.id, 'standard')).rejects.toBeInstanceOf(VoiceLockedError)
+  })
+
+  it('keeps the voice older tales had, and fixed', async () => {
+    const { service, store } = makeService({ narration: true })
+    const story = await service.createStory({ theme: 'pirate' })
+    await store.updateStory(story.id, { voice: undefined, config: { ...story.config, narrator: 'plain' } })
+    expect(await service.voiceState(story.id)).toMatchObject({ chosen: 'standard', locked: true })
   })
 })

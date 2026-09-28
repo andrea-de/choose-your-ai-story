@@ -1,6 +1,8 @@
 /* Future: a mission log on a dark glass screen. Cold cyan light, scanlines, a faint grid. */
 
 .desk[data-theme='future'] {
+  /* Text on the accent colour: dark, since this accent is light. */
+  --on-rubric: #04121a;
   --ink: #d6f3fc;
   --ink-soft: #8dbfd0;
   --ink-faint: #53808f;
@@ -86,7 +88,8 @@
   filter: none;
   animation-name: decode;
   animation-duration: 420ms;
-  animation-timing-function: steps(4, end);
+  /* start, not end: a finished animation can report progress 0.99999…, which end-steps round down. */
+  animation-timing-function: steps(4, start);
 }
 
 .desk[data-theme='future'] .drop-cap.word,
@@ -135,13 +138,34 @@
 .desk[data-theme='future'] .sketch img {
   /* Black-on-white sketches become glowing cyan line art. */
   filter: invert(1) sepia(1) saturate(6) hue-rotate(150deg) brightness(1.05) drop-shadow(0 0 5px rgba(77, 227, 255, 0.55));
+}
+
+/* Scanned in line by line: down, across, up or out from a centre line, by variant. */
+.desk[data-theme='future'] .sketch[data-variant] img {
   clip-path: inset(0 0 100% 0);
-  animation-name: scan-in;
+}
+
+.desk[data-theme='future'] .sketch[data-variant='1'] img {
+  clip-path: inset(0 100% 0 0);
+}
+
+.desk[data-theme='future'] .sketch[data-variant='2'] img {
+  clip-path: inset(100% 0 0 0);
+}
+
+.desk[data-theme='future'] .sketch[data-variant='3'] img {
+  clip-path: inset(50% 0 50% 0);
+}
+
+.desk[data-theme='future'] .sketch[data-shown] img {
+  animation: scan-in 1100ms steps(22, end) both;
+  animation-delay: var(--appear, 0ms);
 }
 
 @keyframes scan-in {
   to {
-    clip-path: inset(0 0 0 0);
+    /* A hair past the edge, so the last step lands fully open. */
+    clip-path: inset(-1% -1% -1% -1%);
   }
 }
 
@@ -191,9 +215,17 @@
   text-shadow: 0 0 8px rgba(245, 181, 74, 0.45);
 }
 
-/* Changing logs: the screen flares, shifts and fades rather than turning. */
+/*
+ * Changing logs: the screen flares, shifts and fades rather than turning.
+ * Only transform and opacity animate, so the GPU moves already-painted layers;
+ * an animated blur or brightness filter repainted the whole glowing page every frame.
+ */
 .desk[data-theme='future'] .leaf {
   transform-origin: center;
+}
+
+.desk[data-theme='future'] .leaf.turning {
+  will-change: transform, opacity;
 }
 
 .desk[data-theme='future'] .leaf.turning.forward {
@@ -206,50 +238,67 @@
   animation-duration: 520ms;
 }
 
+/* The flare: a cyan wash over the leaving screen. */
 .desk[data-theme='future'] .leaf.turning::after {
-  background: linear-gradient(to bottom, transparent 40%, rgba(77, 227, 255, 0.35) 50%, transparent 60%);
-  background-size: 100% 300%;
+  background: rgba(150, 240, 255, 0.28);
+  animation: log-flare 520ms ease-out forwards;
+}
+
+/* The scanline: a bright band sweeping up the screen. */
+.desk[data-theme='future'] .leaf.turning::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 22%;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(to bottom, transparent, rgba(77, 227, 255, 0.4) 50%, transparent);
+  will-change: transform;
   animation: scanline-sweep 520ms linear forwards;
 }
 
 @keyframes log-out {
-  0% {
+  from {
     opacity: 1;
     transform: none;
-    filter: none;
   }
-  30% {
-    filter: brightness(1.8) saturate(1.4);
-  }
-  100% {
+  to {
     opacity: 0;
     transform: translateX(-10%) scale(0.97);
-    filter: blur(4px) brightness(2);
   }
 }
 
 @keyframes log-in {
-  0% {
+  from {
     opacity: 0;
     transform: translateX(-10%) scale(0.97);
-    filter: blur(4px) brightness(2);
   }
-  70% {
-    filter: brightness(1.5);
-  }
-  100% {
+  to {
     opacity: 1;
     transform: none;
-    filter: none;
+  }
+}
+
+@keyframes log-flare {
+  0% {
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
   }
 }
 
 @keyframes scanline-sweep {
   from {
-    background-position: 0 100%;
+    transform: translateY(460%);
   }
   to {
-    background-position: 0 0;
+    transform: translateY(-100%);
   }
 }
 
@@ -346,7 +395,8 @@
   border-color: rgba(77, 227, 255, 0.3);
 }
 
-.desk[data-theme='future'] .tone[aria-pressed='true'] {
+.desk[data-theme='future'] .tone[aria-pressed='true'],
+.desk[data-theme='future'] .tone[aria-checked='true'] {
   box-shadow: 0 0 12px rgba(77, 227, 255, 0.4);
   color: #e8fcff;
 }
@@ -389,4 +439,17 @@
   text-transform: uppercase;
   color: var(--rubric);
   text-shadow: 0 0 10px rgba(77, 227, 255, 0.6);
+}
+
+.desk[data-theme='future'] .sound-ribbon[aria-pressed='true'],
+.desk[data-theme='future'] .menu-ribbon[aria-pressed='true'] {
+  background: rgba(77, 227, 255, 0.22);
+  box-shadow: 0 0 18px rgba(77, 227, 255, 0.7);
+}
+
+/* No big initial here, so an opening quote stays inline. */
+.desk[data-theme='future'] .drop-lead {
+  position: static;
+  font: inherit;
+  padding: 0;
 }

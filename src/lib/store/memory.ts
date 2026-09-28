@@ -1,8 +1,12 @@
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import type { Illustration } from '../ai/types'
+import { addUsage, type Usage } from '../ai/pricing'
+import type { Illustration, Narration } from '../ai/types'
 import type { PageNode, Story } from '../story/types'
 import type { StoryStore } from './types'
+
+type MediaKind = 'illustrations' | 'narrations'
+type Media = Illustration | Narration
 
 interface StoryRecord {
   story: Story
@@ -11,13 +15,14 @@ interface StoryRecord {
 
 /**
  * Keeps everything in memory. With `dir` set, it also writes each story to
- * `<dir>/stories/<id>.json` and each illustration to `<dir>/illustrations/`,
+ * `<dir>/stories/<id>.json`, each illustration to `<dir>/illustrations/` and each
+ * narration to `<dir>/narrations/`,
  * and reloads them on first use. Good for local play and a single server;
  * a multi-instance deploy needs a database-backed StoryStore.
  */
 export class MemoryStore implements StoryStore {
   private stories = new Map<string, StoryRecord>()
-  private illustrations = new Map<string, Illustration>()
+  private media: Record<MediaKind, Map<string, Media>> = { illustrations: new Map(), narrations: new Map() }
   private loaded: Promise<void> | null = null
   private writes = new Map<string, Promise<void>>()
 
@@ -101,34 +106,67 @@ export class MemoryStore implements StoryStore {
     await this.persist(storyId)
   }
 
-  async getIllustration(storyId: string, number: number) {
+  async updateStory(storyId: string, patch: Partial<Story>) {
+    await this.load()
+    const record = this.stories.get(storyId)
+    if (!record) return null
+    record.story = { ...record.story, ...patch, id: record.story.id }
+    await this.persist(storyId)
+    return record.story
+  }
+
+  async recordUsage(storyId: string, usage: Usage, at = Date.now()) {
+    await this.load()
+    const record = this.stories.get(storyId)
+    if (!record) return
+    record.story = { ...record.story, cost: addUsage(record.story.cost, usage, at) }
+    await this.persist(storyId)
+  }
+
+  getIllustration(storyId: string, number: number) {
+    return this.getMedia('illustrations', storyId, number)
+  }
+
+  saveIllustration(storyId: string, number: number, illustration: Illustration) {
+    return this.saveMedia('illustrations', storyId, number, illustration)
+  }
+
+  getNarration(storyId: string, number: number) {
+    return this.getMedia('narrations', storyId, number)
+  }
+
+  saveNarration(storyId: string, number: number, narration: Narration) {
+    return this.saveMedia('narrations', storyId, number, narration)
+  }
+
+  private async getMedia(kind: MediaKind, storyId: string, number: number): Promise<Media | null> {
     await this.load()
     const key = `${storyId}-${number}`
-    const cached = this.illustrations.get(key)
+    const cached = this.media[kind].get(key)
     if (cached || !this.dir) return cached ?? null
     try {
-      const meta = JSON.parse(await readFile(this.illustrationPath(key, 'json'), 'utf8')) as { mimeType: string }
-      const data = new Uint8Array(await readFile(this.illustrationPath(key, 'bin')))
-      const illustration = { mimeType: meta.mimeType, data }
-      this.illustrations.set(key, illustration)
-      return illustration
+      const meta = JSON.parse(await readFile(this.mediaPath(kind, key, 'json'), 'utf8')) as { mimeType: string }
+      const data = new Uint8Array(await readFile(this.mediaPath(kind, key, 'bin')))
+      const media = { mimeType: meta.mimeType, data }
+      this.media[kind].set(key, media)
+      return media
     } catch {
       return null
     }
   }
 
-  async saveIllustration(storyId: string, number: number, illustration: Illustration) {
+  private async saveMedia(kind: MediaKind, storyId: string, number: number, media: Media) {
     await this.load()
     const key = `${storyId}-${number}`
-    this.illustrations.set(key, illustration)
+    this.media[kind].set(key, media)
     if (!this.dir) return
-    await mkdir(path.join(this.dir, 'illustrations'), { recursive: true })
-    await writeFile(this.illustrationPath(key, 'bin'), illustration.data)
-    await writeFile(this.illustrationPath(key, 'json'), JSON.stringify({ mimeType: illustration.mimeType }))
+    await mkdir(path.join(this.dir, kind), { recursive: true })
+    await writeFile(this.mediaPath(kind, key, 'bin'), media.data)
+    await writeFile(this.mediaPath(kind, key, 'json'), JSON.stringify({ mimeType: media.mimeType }))
   }
 
-  private illustrationPath(key: string, ext: string) {
-    return path.join(this.dir!, 'illustrations', `${key}.${ext}`)
+  private mediaPath(kind: MediaKind, key: string, ext: string) {
+    return path.join(this.dir!, kind, `${key}.${ext}`)
   }
 
   private load() {
