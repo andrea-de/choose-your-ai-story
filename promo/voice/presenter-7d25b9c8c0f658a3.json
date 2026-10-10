@@ -1,0 +1,9 @@
+{
+  "engine": "kokoro",
+  "voice": "am_michael",
+  "speed": 1,
+  "text": "And each kind of book turns its pages its own way.",
+  "heard": "and each kind of book turns its pages its own way.",
+  "match": 1,
+  "f0": 114.8
+}

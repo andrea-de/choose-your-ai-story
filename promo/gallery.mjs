@@ -77,11 +77,10 @@ function collectVideos() {
 
 /** Stills: what each is for, and the size that slot needs. */
 const STILL_SLOTS = [
-  { group: 'posts', title: 'Social posts', where: 'Instagram and Facebook feed (4:5), and a square for anywhere', match: /^posts\/post-/, size: [1080, 1350], cap: 8 << 20 },
+  { group: 'posts', title: 'Feed posts', where: 'Instagram and Facebook feed (4:5), and a square for anywhere', match: /^posts\/post-/, size: [1080, 1350], cap: 8 << 20 },
   { group: 'posts', match: /^posts\/square-/, size: [1080, 1080], cap: 8 << 20 },
-  { group: 'link', title: 'Link preview', where: 'og:image and twitter:image for the site, when there is one', match: /^og-card/, size: [1200, 630], cap: 5 << 20 },
-  { group: 'screens-portrait', title: 'App screens, phone', where: 'Phone screenshots at 1080×1920 (9:16), for posts, stories and a future listing', match: /^screens\/portrait-/, size: [1080, 1920], cap: 8 << 20 },
-  { group: 'screens-landscape', title: 'App screens, desktop', where: 'Desktop screenshots at 1920×1080, for the site and press', match: /^screens\/landscape-/, size: [1920, 1080], cap: 8 << 20 },
+  { group: 'stories', title: 'Stories', where: 'Instagram, Facebook, TikTok and Snapchat stories (9:16); words kept inside the safe zone', match: /^stories\/story-/, size: [1080, 1920], cap: 8 << 20 },
+  { group: 'screens-portrait', title: 'App screens', where: 'Phone screenshots at 1080×1920 (9:16), for posts, stories and a future listing', match: /^screens\/portrait-/, size: [1080, 1920], cap: 8 << 20 },
 ]
 
 function collectStills() {
@@ -154,7 +153,7 @@ function videoCard(v, i, group) {
     <h3>${esc(v.title)} <span class="shape">${v.profile === 'portrait' ? '9:16' : '16:9'}</span></h3>
     <p class="slot">${esc(v.slot ?? '')}</p>
     ${v.about ? `<p>${esc(v.about)}</p>` : ''}
-    <p class="facts">${v.duration.toFixed(1)} s · master ${MB(v.masterSize)} · <span class="mono">${esc(v.file)}</span>${v.draftVoice ? ' · <span class="flag">draft voice</span>' : ''}</p>
+    <p class="facts">${v.duration.toFixed(1)} s · master ${MB(v.masterSize)} · <span class="mono">${esc(v.file)}</span>${v.voice ? ` · voice <span class="mono">${esc(v.voice.voice)}</span> (${esc(v.voice.engine)})` : ''}</p>
     <ul class="badges">${v.checks.map(badge).join('')}</ul>
     <details class="inner"><summary>What is said, and when</summary>${script}</details>
     ${v.sheet ? `<details class="inner"><summary>Contact sheet and last frame</summary><div class="frames"><img data-src="${v.sheet}" alt="Twelve frames across the cut" class="sheet">${v.last ? `<img data-src="${v.last}" alt="The cut's last frame" class="last">` : ''}</div></details>` : ''}
@@ -201,7 +200,7 @@ function page({ videos, stills, commit, money, dry }) {
   const passed = allChecks.filter((c) => c.ok).length
 
   for (const [kind, id, title, where] of [
-    ['video', 'videos', 'Promo videos', 'The tour, with a presenter: 9:16 for social video, 16:9 for YouTube and the site'],
+    ['video', 'videos', 'Promo video', 'The tour, with a presenter: 9:16 for Reels, Shorts and TikTok'],
     ['short', 'shorts', 'Social shorts', 'A reader’s point of view, not ads: 9:16 for Reels, Shorts and TikTok'],
   ]) {
     const list = items[kind]
@@ -218,7 +217,7 @@ function page({ videos, stills, commit, money, dry }) {
   }
 
   const contents = sections.map((s) => s.match(/id="([^"]+)"/)[1])
-  const names = { videos: 'Promo videos', shorts: 'Social shorts', posts: 'Social posts', link: 'Link preview', 'screens-portrait': 'Phone screens', 'screens-landscape': 'Desktop screens' }
+  const names = { videos: 'Promo video', shorts: 'Social shorts', stories: 'Stories', posts: 'Feed posts', 'screens-portrait': 'App screens' }
   return `<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
@@ -283,7 +282,6 @@ button.open { all: unset; cursor: pointer; display: block; position: relative; b
 button.open:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 button.open img { display: block; width: 100%; height: auto; }
 .poster.portrait { aspect-ratio: 9 / 16; max-width: 100%; }
-.poster.landscape { aspect-ratio: 16 / 9; max-width: 100%; }
 .poster img { width: 100%; height: 100%; object-fit: cover; }
 .play { position: absolute; left: 50%; top: 50%; width: 56px; height: 56px; margin: -28px 0 0 -28px; border-radius: 50%; background: rgba(15, 12, 8, 0.72); }
 .play::after { content: ''; position: absolute; left: 22px; top: 17px; border-style: solid; border-width: 11px 0 11px 17px; border-color: transparent transparent transparent #fff; }
@@ -304,7 +302,6 @@ ol.script .beat { font: 0.74rem var(--mono); color: var(--muted); }
 .frames .sheet { flex: 1 1 420px; min-width: 0; }
 .frames .last { width: 160px; }
 .stills { display: grid; gap: 18px; padding-top: 18px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); }
-.stills.link, .stills.screens-landscape { grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); }
 .still { margin: 0; display: grid; gap: 8px; align-content: start; }
 .still figcaption { display: grid; gap: 2px; font-size: 0.8rem; }
 .still .name { color: var(--ink); overflow-wrap: anywhere; }
@@ -342,7 +339,7 @@ dialog.viewer::backdrop { background: rgba(10, 8, 6, 0.8); }
       <span>review copies <b>${MB(0)}</b></span>
       <span>production spend <b>$${(money.tales + money.voices).toFixed(2)}</b></span>
     </p>
-    ${dry ? `<p class="dry"><b>Dry run.</b> These tales were written by the built-in mock storyteller and the spoken lines are robotic drafts, so the words and voices are placeholders. Every shot, cut, timing and check is real. Run again with a Gemini key for the real thing.</p>` : ''}
+    ${dry ? `<p class="dry"><b>Placeholder tales.</b> The stories on screen were written by the app’s built-in mock storyteller, because this build had no Gemini key. The voices, shots, cuts, timings and checks are final; run again with a key for real tales.</p>` : ''}
     <nav class="contents" aria-label="Sections">${contents.map((id) => `<a href="#${id}">${names[id] ?? id}</a>`).join('')}</nav>
   </header>
   ${sections.join('')}
@@ -428,7 +425,7 @@ dialog.addEventListener('keydown', (e) => {
 if (process.argv.includes('--approve')) {
   if (!existsSync(path.join(GALLERY, 'index.html'))) throw new Error('nothing built yet: npm run promo:gallery')
   const html = readFileSync(path.join(GALLERY, 'index.html'), 'utf8')
-  if (html.includes('class="dry"') && !process.argv.includes('--force')) throw new Error('this gallery is a dry run (mock tales or draft voices); approve a real one, or pass --force')
+  if (html.includes('class="dry"') && !process.argv.includes('--force')) throw new Error('this gallery shows the mock storyteller’s placeholder tales; approve a real run, or pass --force')
   const dest = path.join(PROMO, 'gallery')
   rmSync(dest, { recursive: true, force: true })
   cpSync(GALLERY, dest, { recursive: true })
@@ -443,7 +440,7 @@ mkdirSync(GALLERY, { recursive: true })
 const videos = collectVideos()
 const stills = collectStills()
 const commit = spawnSync('git', ['rev-parse', '--short', 'HEAD'], { cwd: ROOT, encoding: 'utf8' }).stdout.trim()
-const dry = PROVIDER !== 'gemini' || videos.some((v) => v.draftVoice)
+const dry = PROVIDER !== 'gemini'
 let html = page({ videos, stills, commit, money: spend(), dry })
 writeFileSync(path.join(GALLERY, 'index.html'), html)
 // The folder's size is only known once the page is in it.

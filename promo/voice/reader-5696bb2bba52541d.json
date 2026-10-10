@@ -1,0 +1,9 @@
+{
+  "engine": "kokoro",
+  "voice": "af_heart",
+  "speed": 1,
+  "text": "Every filled dot is a page that has already been written.",
+  "heard": "Every fill dot is a page that has already been written.",
+  "match": 0.909,
+  "f0": 201.7
+}

@@ -1,66 +1,47 @@
-// Spoken lines for the videos: the presenter of the promo cuts and the reader
-// who talks through the social shorts. Each take is recorded once and kept,
-// keyed by everything that shapes it (model, voice, direction, words), so a
-// rebuild never pays twice and an edited line is the only one recorded again.
+// Spoken lines for the videos: the presenter of the tour and the reader who
+// talks through the social shorts. Each take is made once and kept in
+// promo/voice/ (committed), keyed by everything that shapes it (engine, voice,
+// speed or direction, words), so only an edited line is ever made again.
 //
-// With GEMINI_API_KEY: Gemini speech, kept in promo/voice/ (committed), its cost
-// in promo/voice/ledger.json. Without: an espeak-ng draft with the same words,
-// kept in promo/work/voice-draft/ (ignored) and labelled a draft everywhere it shows.
+// The voice is Kokoro-82M, run locally (Apache-2.0; see lib/kokoro_tts.py for
+// where the model lives): free, deterministic, and good enough to publish.
+// PROMO_VOICE=gemini uses Gemini speech instead (paid; spend in promo/voice/ledger.json).
+//
+// Every take is checked by ear: Whisper transcribes it (lib/listen.py) and a
+// take that does not say its words fails, and its pitch is measured.
 import { createHash } from 'node:crypto'
 import { spawnSync } from 'node:child_process'
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { PROMO, log } from './app.mjs'
 
+export const ENGINE = process.env.PROMO_VOICE ?? 'kokoro'
 export const SPEECH_MODEL = process.env.GEMINI_SPEECH_MODEL ?? 'gemini-3.8-flash-tts'
+const KOKORO_PY = process.env.KOKORO_PYTHON ?? '/opt/kokoro/venv/bin/python'
+const LIB = path.join(PROMO, 'lib')
+const DIR = path.join(PROMO, 'voice')
+const LEDGER = path.join(DIR, 'ledger.json')
 const RATE = 24000
-const LEDGER = path.join(PROMO, 'voice', 'ledger.json')
 
 /**
- * Who speaks. Neither may sound like an in-app narrator (Gacrux, Kore, Algenib,
- * Fenrir, Achernar, Charon, plus the cast in src/lib/voiceCast.ts): measure the
- * pitch once real takes exist, and audition before settling.
+ * Who speaks. Kept apart from each other and from the app's narrators by
+ * pitch and accent (measured: presenter ~118 Hz, reader ~207 Hz).
  */
 export const SPEAKERS = {
   presenter: {
-    voice: 'Iapetus',
-    style: 'a calm, friendly guide, plainly spoken, unhurried, no announcer voice',
-    draft: { voice: 'en-us+m3', speed: 150, pitch: 38 },
+    kokoro: { voice: 'am_michael', speed: 1.0 },
+    gemini: { voice: 'Iapetus', style: 'a calm, friendly guide, plainly spoken, unhurried, no announcer voice' },
   },
   reader: {
-    voice: 'Sulafat',
-    style: 'her ordinary speaking voice, telling a friend about something, plain, no performance',
-    draft: { voice: 'en-us+f3', speed: 160, pitch: 52 },
+    kokoro: { voice: 'af_heart', speed: 1.0 },
+    gemini: { voice: 'Sulafat', style: 'her ordinary speaking voice, telling a friend about something, plain, no performance' },
   },
 }
 
-export const live = () => Boolean(process.env.GEMINI_API_KEY)
-
 function keyOf(speaker, text) {
-  const s = SPEAKERS[speaker]
-  const parts = live() ? ['gemini', SPEECH_MODEL, s.voice, s.style, text] : ['draft', JSON.stringify(s.draft), text]
+  const s = SPEAKERS[speaker][ENGINE]
+  const parts = ENGINE === 'gemini' ? ['gemini', SPEECH_MODEL, s.voice, s.style, text] : ['kokoro-v1.0', s.voice, String(s.speed), text]
   return createHash('sha256').update(parts.join('\u0000')).digest('hex').slice(0, 16)
-}
-
-function dirFor() {
-  return live() ? path.join(PROMO, 'voice') : path.join(PROMO, 'work', 'voice-draft')
-}
-
-function wavHeader(bytes, rate, channels = 1) {
-  const h = Buffer.alloc(44)
-  h.write('RIFF', 0)
-  h.writeUInt32LE(36 + bytes, 4)
-  h.write('WAVEfmt ', 8)
-  h.writeUInt32LE(16, 16)
-  h.writeUInt16LE(1, 20)
-  h.writeUInt16LE(channels, 22)
-  h.writeUInt32LE(rate, 24)
-  h.writeUInt32LE(rate * channels * 2, 28)
-  h.writeUInt16LE(channels * 2, 32)
-  h.writeUInt16LE(16, 34)
-  h.write('data', 36)
-  h.writeUInt32LE(bytes, 40)
-  return h
 }
 
 export function probeSeconds(file) {
@@ -68,17 +49,56 @@ export function probeSeconds(file) {
   return Number(r.stdout.trim())
 }
 
-/** Seconds of speech, without the leading and trailing silence a take comes back with. */
-function trimSilence(file) {
-  const tmp = file.replace(/\.wav$/, '.trim.wav')
+function ffmpeg(argv) {
+  const r = spawnSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-y', ...argv], { encoding: 'utf8' })
+  if (r.status !== 0) throw new Error(`ffmpeg ${argv.join(' ')}\n${r.stderr}`)
+}
+
+/** Mono 16-bit at 24 kHz with a plain header, without the silence a take comes back with. */
+function normalise(file) {
+  const tmp = file.replace(/\.wav$/, '.tmp.wav')
   // Only near-silence counts, so a word's soft last sound ("shoes") is kept.
-  const f = 'silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.05,areverse,silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.12,areverse'
-  const r = spawnSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-y', '-i', file, '-af', f, tmp])
-  if (r.status === 0) spawnSync('mv', [tmp, file])
+  const trim = 'silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.05,areverse,silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.12,areverse'
+  ffmpeg(['-i', file, '-af', trim, '-ar', String(RATE), '-ac', '1', '-c:a', 'pcm_s16le', '-bitexact', '-map_metadata', '-1', tmp])
+  renameSync(tmp, file)
+}
+
+/** Runs Kokoro once for any number of lines: [{ text, voice, speed, out }]. */
+export function kokoro(jobs) {
+  if (!jobs.length) return
+  if (!existsSync(KOKORO_PY)) throw new Error(`no Kokoro at ${KOKORO_PY}: see promo/README.md, “Voices”`)
+  const list = path.join(DIR, `.jobs-${process.pid}.json`)
+  mkdirSync(DIR, { recursive: true })
+  writeFileSync(list, JSON.stringify(jobs))
+  const r = spawnSync(KOKORO_PY, [path.join(LIB, 'kokoro_tts.py'), list], { encoding: 'utf8', maxBuffer: 1 << 24 })
+  spawnSync('rm', ['-f', list])
+  if (r.status !== 0) throw new Error(`Kokoro failed:\n${r.stderr.slice(-1500)}`)
+}
+
+/** Transcript and median pitch of each file, from Whisper and an autocorrelation. */
+export function listen(files) {
+  if (!files.length) return []
+  const r = spawnSync(KOKORO_PY, [path.join(LIB, 'listen.py'), ...files], { encoding: 'utf8', maxBuffer: 1 << 24 })
+  if (r.status !== 0) throw new Error(`listening failed:\n${r.stderr.slice(-1500)}`)
+  return r.stdout.split('\n').filter((l) => l.startsWith('{')).map((l) => JSON.parse(l))
+}
+
+const NUMBERS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve']
+/** Words to compare: a transcriber writes "Page 1" for "Page one", so small numerals become words. */
+const words = (s) => (s.toLowerCase().replace(/[’']/g, '').match(/[a-z0-9]+/g) ?? []).map((w) => (/^\d+$/.test(w) && Number(w) < NUMBERS.length ? NUMBERS[Number(w)] : w))
+
+/** Share of the script's words heard, in order (a longest common subsequence). */
+export function heard(script, transcript) {
+  const a = words(script)
+  const b = words(transcript)
+  const dp = Array.from({ length: a.length + 1 }, () => new Array(b.length + 1).fill(0))
+  for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) dp[i][j] = a[i - 1] === b[j - 1] ? dp[i - 1][j - 1] + 1 : Math.max(dp[i - 1][j], dp[i][j - 1])
+  return a.length ? dp[a.length][b.length] / a.length : 1
 }
 
 async function geminiTake(speaker, text, file) {
-  const s = SPEAKERS[speaker]
+  if (!process.env.GEMINI_API_KEY) throw new Error('PROMO_VOICE=gemini needs GEMINI_API_KEY')
+  const s = SPEAKERS[speaker].gemini
   const res = await fetch('https://generativelanguage.googleapis.com/v1beta/interactions?alt=sse', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY },
@@ -111,8 +131,11 @@ async function geminiTake(speaker, text, file) {
   }
   const pcm = Buffer.concat(chunks)
   if (!pcm.length) throw new Error(`no audio for “${text}”`)
-  writeFileSync(file, Buffer.concat([wavHeader(pcm.length, RATE), pcm]))
-  // The same prices the app charges itself (src/lib/ai/pricing.ts): $0.5/M in, $9/M out.
+  const raw = file.replace(/\.wav$/, '.pcm')
+  writeFileSync(raw, pcm)
+  ffmpeg(['-f', 's16le', '-ar', String(RATE), '-ac', '1', '-i', raw, file])
+  spawnSync('rm', ['-f', raw])
+  // The prices the app charges itself (src/lib/ai/pricing.ts): $0.5/M in, $9/M out.
   const usd = ((usage?.total_input_tokens ?? 0) * 0.5 + (usage?.total_output_tokens ?? 0) * 9) / 1e6
   const ledger = existsSync(LEDGER) ? JSON.parse(readFileSync(LEDGER, 'utf8')) : { total: 0, takes: [] }
   ledger.takes.push({ at: new Date().toISOString(), model: SPEECH_MODEL, voice: s.voice, text, usd })
@@ -120,36 +143,40 @@ async function geminiTake(speaker, text, file) {
   writeFileSync(LEDGER, JSON.stringify(ledger, null, 2) + '\n')
 }
 
-function draftTake(speaker, text, file) {
-  const d = SPEAKERS[speaker].draft
-  const raw = file.replace(/\.wav$/, '.raw.wav')
-  const r = spawnSync('espeak-ng', ['-v', d.voice, '-s', String(d.speed), '-p', String(d.pitch), '-w', raw, text])
-  if (r.status !== 0) throw new Error(`espeak-ng failed: ${r.stderr}`)
-  spawnSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-y', '-i', raw, '-ar', String(RATE), '-ac', '1', file])
-  spawnSync('rm', ['-f', raw])
-}
-
 /**
- * The take for a line, recording it if need be (unless `post`, which may never
- * pay). Returns { file, seconds, draft }.
+ * Takes for every line of a speaker, made if missing (never with `post`, which
+ * may not create anything) and checked. Returns { id: { file, seconds, text, f0 } }.
  */
-export async function take(speaker, text, { post = false } = {}) {
-  const dir = dirFor()
-  mkdirSync(dir, { recursive: true })
-  const file = path.join(dir, `${speaker}-${keyOf(speaker, text)}.wav`)
-  if (!existsSync(file)) {
-    if (live()) {
-      if (post) throw new Error(`--post: no take yet for ${speaker} “${text}”`)
-      log(`recording ${speaker}: “${text}”`)
-      await geminiTake(speaker, text, file)
-    } else {
-      draftTake(speaker, text, file)
-    }
-    trimSilence(file)
+export async function takes(speaker, lines, { post = false } = {}) {
+  mkdirSync(DIR, { recursive: true })
+  const out = {}
+  const missing = []
+  for (const [id, text] of Object.entries(lines)) {
+    const file = path.join(DIR, `${speaker}-${keyOf(speaker, text)}.wav`)
+    out[id] = { file, text, speaker }
+    if (!existsSync(file)) missing.push(out[id])
   }
-  const seconds = probeSeconds(file)
-  const words = text.split(/\s+/).length
-  // A truncated take: Gemini sometimes stops early. Record it again by deleting the file.
-  if (live() && seconds < words / 4.5) throw new Error(`take looks cut short (${seconds.toFixed(2)} s for ${words} words): ${file}`)
-  return { file, seconds, draft: !live(), speaker, text }
+  if (missing.length && post) throw new Error(`--post: no take yet for ${missing.map((m) => `“${m.text}”`).join(', ')}`)
+  if (missing.length) {
+    log(`voicing ${missing.length} ${speaker} line(s) with ${ENGINE}`)
+    if (ENGINE === 'gemini') for (const m of missing) await geminiTake(speaker, m.text, m.file)
+    else kokoro(missing.map((m) => ({ text: m.text, ...SPEAKERS[speaker].kokoro, out: m.file })))
+    for (const m of missing) normalise(m.file)
+    // New takes are listened to before they are kept: one that does not say its words is thrown away.
+    for (const r of listen(missing.map((m) => m.file))) {
+      const m = missing.find((x) => x.file === r.file)
+      const share = heard(m.text, r.text)
+      writeFileSync(m.file.replace(/\.wav$/, '.json'), JSON.stringify({ engine: ENGINE, ...SPEAKERS[speaker][ENGINE], text: m.text, heard: r.text, match: +share.toFixed(3), f0: r.f0 }, null, 2) + '\n')
+      if (share < 0.9) {
+        spawnSync('rm', ['-f', m.file])
+        throw new Error(`take does not say its line (${Math.round(share * 100)}% heard): “${m.text}” → “${r.text}”`)
+      }
+    }
+  }
+  for (const t of Object.values(out)) {
+    t.seconds = probeSeconds(t.file)
+    const meta = t.file.replace(/\.wav$/, '.json')
+    if (existsSync(meta)) Object.assign(t, { f0: JSON.parse(readFileSync(meta, 'utf8')).f0 })
+  }
+  return out
 }

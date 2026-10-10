@@ -1,0 +1,9 @@
+{
+  "engine": "kokoro",
+  "voice": "af_heart",
+  "speed": 1,
+  "text": "This book is shared with everyone who reads it.",
+  "heard": "This book is shared with everyone who reads it.",
+  "match": 1,
+  "f0": 186
+}

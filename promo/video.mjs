@@ -19,7 +19,7 @@ import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { buildApp, DATA, log, OUT, PROMO, PROVIDER, startApp } from './lib/app.mjs'
 import { closeBrowser, launch, newPage, PROFILES, record } from './lib/capture.mjs'
-import { probeSeconds, take } from './lib/voice.mjs'
+import { ENGINE, probeSeconds, SPEAKERS, takes as voiceTakes } from './lib/voice.mjs'
 
 const args = process.argv.slice(2)
 const flag = (name) => args.includes(name)
@@ -48,10 +48,8 @@ function ffmpeg(argv) {
 
 // ---------------------------------------------------------------- capture
 
-async function takes(production) {
-  const out = {}
-  for (const [id, text] of Object.entries(production.lines)) out[id] = await take(production.speaker, text, { post: POST })
-  return out
+function takes(production) {
+  return voiceTakes(production.speaker, production.lines, { post: POST })
 }
 
 /** Reads a page to its choices: taps the words, turning sheets, as a reader does. */
@@ -329,7 +327,6 @@ async function finish({ production, profileName, metas, takesById, out }) {
   if (!existsSync(`${base}.last.jpg`)) throw new Error(`no last frame from ${out}`)
   const cols = profileName === 'portrait' ? 6 : 4
   ffmpeg(['-i', out, '-vf', `fps=${(12 / duration).toFixed(4)},scale=${profileName === 'portrait' ? 220 : 400}:-1,tile=${cols}x${12 / cols}`, '-frames:v', '1', '-q:v', '4', `${base}.sheet.jpg`])
-  const draft = Object.values(takesById).some((t) => t.draft)
   const result = {
     production: production.name,
     title: production.title,
@@ -339,7 +336,7 @@ async function finish({ production, profileName, metas, takesById, out }) {
     duration: +duration.toFixed(2),
     size: Number(info.format.size),
     provider: PROVIDER,
-    draftVoice: draft,
+    voice: { engine: ENGINE, ...SPEAKERS[production.speaker][ENGINE] },
     about: production.about,
     beats: metas.map((m, i) => ({ name: m.beat, at: +starts[i].toFixed(2), seconds: +m.duration.toFixed(2) })),
     script,

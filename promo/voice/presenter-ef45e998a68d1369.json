@@ -1,0 +1,9 @@
+{
+  "engine": "kokoro",
+  "voice": "am_michael",
+  "speed": 1,
+  "text": "Say who you are and where it begins, or roll the dice.",
+  "heard": "Say who you are and where it begins, or roll the dice.",
+  "match": 1,
+  "f0": 120.3
+}

@@ -1,0 +1,9 @@
+{
+  "engine": "kokoro",
+  "voice": "am_michael",
+  "speed": 1,
+  "text": "Every page is kept. The next reader can follow your path, or find a new one.",
+  "heard": "Every page is kept. The next reader can follow your path or find a new one.",
+  "match": 1,
+  "f0": 121.8
+}

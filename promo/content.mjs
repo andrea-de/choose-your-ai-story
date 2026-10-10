@@ -7,9 +7,11 @@
 // With GEMINI_API_KEY set these are real tales and real voices, and their cost
 // is written to promo/data/gemini/ledger.json. Without it the mock storyteller
 // writes a dry run into promo/data/mock/.
-import { existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
+import { spawnSync } from 'node:child_process'
 import path from 'node:path'
 import { api, buildApp, DATA, log, PROMO, PROVIDER, startApp } from './lib/app.mjs'
+import { heard, kokoro, listen } from './lib/voice.mjs'
 
 const spec = JSON.parse(readFileSync(path.join(PROMO, 'tales.json'), 'utf8')).tales
 const INDEX = path.join(DATA, 'tales.index.json')
@@ -29,6 +31,7 @@ function missing(index) {
     }
     if (made.pages.length < tale.path.length + 1 && !made.ended) out.push(`${tale.key}: ${made.pages.length}/${tale.path.length + 1} pages`)
     if ((made.narrated ?? 0) < tale.narrate) out.push(`${tale.key}: ${made.narrated ?? 0}/${tale.narrate} pages recorded`)
+    if (PROVIDER === 'mock' && (made.voiced ?? 0) < (made.narrated ?? 0)) out.push(`${tale.key}: mock narration not yet read by a voice`)
   }
   return out
 }
@@ -84,7 +87,53 @@ async function make(index) {
   } finally {
     await app.stop()
   }
+  if (PROVIDER === 'mock') voiceMockNarration(index)
   writeLedger(index)
+}
+
+/**
+ * The mock storyteller narrates with a hum. For the dry run, each recorded page
+ * is read aloud instead by Kokoro, locally, in a voice for its kind of book,
+ * and stored where the app keeps its narration, so the app plays it like any
+ * other. A real (Gemini) run never comes here: its narration is the app's own.
+ */
+const MOCK_NARRATORS = {
+  'historic-fantasy': { voice: 'bm_fable', speed: 0.95 },
+  future: { voice: 'af_bella', speed: 1.0 },
+  noir: { voice: 'am_fenrir', speed: 0.95 },
+  pirate: { voice: 'am_puck', speed: 0.95 },
+  dream: { voice: 'bf_emma', speed: 0.92 },
+  ancient: { voice: 'bm_george', speed: 0.95 },
+}
+
+function voiceMockNarration(index) {
+  const jobs = []
+  for (const made of Object.values(index.tales)) {
+    const saved = JSON.parse(readFileSync(path.join(DATA, 'stories', `${made.id}.json`), 'utf8'))
+    for (let n = made.voiced ?? 0; n < (made.narrated ?? 0); n++) {
+      const number = made.pages[n]
+      const page = saved.pages.find((p) => p.number === number)
+      jobs.push({ made, number, text: page.text, ...MOCK_NARRATORS[made.theme], out: path.join(DATA, 'narrations', `${made.id}-${number}.kokoro.wav`) })
+    }
+  }
+  if (!jobs.length) return
+  log(`reading ${jobs.length} mock page(s) aloud with Kokoro`)
+  kokoro(jobs.map(({ text, voice, speed, out }) => ({ text, voice, speed, out })))
+  const checks = listen(jobs.map((j) => j.out))
+  for (const job of jobs) {
+    const r = checks.find((c) => c.file === job.out)
+    const share = heard(job.text, r?.text ?? '')
+    if (share < 0.85) throw new Error(`${job.made.id} page ${job.number}: the reading does not say the page (${Math.round(share * 100)}% heard)`)
+    // The app's own format: 16-bit mono WAV at 24 kHz, a plain header, in place of the hum.
+    const bin = path.join(DATA, 'narrations', `${job.made.id}-${job.number}.bin`)
+    const r2 = spawnSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-y', '-i', job.out, '-ar', '24000', '-ac', '1', '-c:a', 'pcm_s16le', '-bitexact', '-map_metadata', '-1', '-f', 'wav', `${bin}.tmp`])
+    if (r2.status !== 0) throw new Error(`ffmpeg: ${r2.stderr}`)
+    renameSync(`${bin}.tmp`, bin)
+    spawnSync('rm', ['-f', job.out])
+    job.made.voiced = Math.max(job.made.voiced ?? 0, job.made.pages.indexOf(job.number) + 1)
+    log(`${job.made.id} page ${job.number}: read by ${job.voice} (${Math.round(share * 100)}% heard, ${r.f0} Hz)`)
+  }
+  writeFileSync(INDEX, JSON.stringify(index, null, 2) + '\n')
 }
 
 /** What the tales cost to make, read from the stories' own running costs. */

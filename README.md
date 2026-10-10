@@ -122,4 +122,4 @@ This replaces a 2023 version (Next.js 13, OpenAI, MongoDB) whose commits are kep
 
 ## Promo media
 
-`npm run promo` makes the promotional and social media from the running app: a narrated tour, social shorts, posts, a link card and every screen, with a review gallery that checks each file against where it goes. See [promo/README.md](promo/README.md).
+`npm run promo` makes the mobile promotional and social media from the running app: a narrated tour, social shorts, stories, feed posts and every phone screen, with a review gallery that checks each file against where it goes. See [promo/README.md](promo/README.md).

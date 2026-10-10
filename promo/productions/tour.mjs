@@ -7,13 +7,13 @@ const tour = {
   name: 'tour',
   title: 'Promo tour',
   speaker: 'presenter',
-  profiles: ['portrait', 'landscape'],
-  // Shorts/Reels/TikTok take 60 s comfortably; YouTube and a site hero have no limit worth meeting.
-  limit: { portrait: 60, landscape: 75 },
+  // Mobile only: 9:16, for Reels, Shorts and TikTok.
+  profiles: ['portrait'],
+  // Reels, Shorts and TikTok all take 60 s.
+  limit: { portrait: 60 },
   subtitles: false,
   slots: {
     portrait: 'Social video (Reels, Shorts, TikTok), 9:16',
-    landscape: 'YouTube and the site’s hero video, 16:9',
   },
   lines: {
     hello: 'This is a gamebook that writes itself as you read.',
@@ -73,12 +73,12 @@ const tour = {
         // The tale is begun for real: its cover comes when the storyteller has its title.
         await page.locator('[data-leaf=cover] .cover-begin').waitFor({ timeout: 60_000 })
         mark('cover')
-        await wait(1.4)
+        await wait(0.9)
         const first = say('first', { wait: false })
         await tap(page.locator('[data-leaf=cover] .cover-begin'))
         await page.getByTestId('current-page').getByTestId('prose').waitFor({ state: 'attached', timeout: 60_000 })
         await first
-        await wait(2.0)
+        await wait(1.5)
       },
     },
     {
@@ -90,7 +90,7 @@ const tour = {
       async run({ page, say, tap, wait }) {
         await wait(0.5)
         const spoken = say('choice', { wait: false })
-        await wait(1.8)
+        await wait(1.5)
         await tap(page.getByTestId('current-page').locator('.choice').first(), 0.2)
         await page.getByTestId('current-page').getByTestId('prose').waitFor({ state: 'attached', timeout: 60_000 })
         await spoken
@@ -125,22 +125,25 @@ const tour = {
     })),
     {
       name: 'narrator',
+      endAtPause: { after: 'narrator', min: 3 },
       start: ({ tale }) => `/s/${tale('shepherd').id}/${tale('shepherd').pages[0]}`,
       async before({ page }) {
         await page.getByTestId('current-page').getByTestId('prose').waitFor({ state: 'attached' })
         await page.waitForTimeout(800)
       },
-      async run({ page, say, tap, wait }) {
-        const spoken = say('narrator', { wait: false })
-        await tap(page.getByRole('button', { name: 'Settings' }), 1.0)
+      async run({ page, say, tap, wait, mark }) {
+        // Said in full first: switching narration on starts the reading at once, and nobody talks over the narrator.
+        await tap(page.getByRole('button', { name: 'Settings' }), 0.4)
+        await say('narrator')
         await tap(page.getByRole('radiogroup', { name: 'Narration' }).getByRole('radio', { name: 'active', exact: true }), 0.9)
-        await spoken
         await tap(page.getByRole('button', { name: 'Close settings' }), 0.8)
         // Nothing said over the narrator: let it read.
         // Switching it on may start the reading by itself; if not, the ribbon does.
         const play = page.getByRole('button', { name: 'Play the narrator' })
         if (await play.isVisible()) await tap(play, 0.2)
-        await wait(5.0)
+        mark('narrator')
+        // Recorded long enough to reach a pause; the beat is cut there (endAtPause).
+        await wait(9)
       },
     },
     {

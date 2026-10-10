@@ -1,0 +1,9 @@
+{
+  "engine": "kokoro",
+  "voice": "af_heart",
+  "speed": 1,
+  "text": "And then the book reads it to her.",
+  "heard": "And then the book reads it to her.",
+  "match": 1,
+  "f0": 218.2
+}

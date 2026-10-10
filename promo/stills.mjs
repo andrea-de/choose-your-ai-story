@@ -1,5 +1,5 @@
-// Stills: the real app's screens at exact pixels, and compositions made from
-// them as code (social posts, a square, the link-preview card).
+// Stills, mobile only: the real app's phone screens at exact pixels, and
+// compositions made from them as code (stories, feed posts, a square).
 //
 //   node promo/stills.mjs               screens, then compositions
 //   node promo/stills.mjs --compose     compositions only, from the screens already taken
@@ -126,7 +126,8 @@ async function takeScreens() {
   mkdirSync(SCREENS, { recursive: true })
   const shots = []
   try {
-    for (const profile of ['portrait', 'landscape']) {
+    // Mobile only: the phone layout, at 1080×1920.
+    for (const profile of ['portrait']) {
       for (const screen of screenList(tale)) {
         const { page, context } = await newPage({ profile, settings: { sfx: false, ambience: false } })
         try {
@@ -250,22 +251,23 @@ function squareHtml() {
 </body>`
 }
 
-/** 1200×630: the link-preview card. Title and line on the left, three books fanned on the right. */
-function ogHtml() {
-  const fan = [
-    ['dream', -8, 676, 78],
-    ['noir', 5, 948, 46],
-    ['historic-fantasy', -1, 812, 26],
-  ]
-    .map(([t, deg, left, top]) => `<div class="phone" data-device style="left:${left}px;top:${top}px;width:250px;height:444px;transform:rotate(${deg}deg)"><img src="${img(`portrait-page-${t}.png`)}"></div>`)
-    .join('')
+/**
+ * 1080×1920: a story (Instagram, Facebook, TikTok, Snapchat). Words stay inside
+ * the safe zone, clear of the top 250 px and bottom 340 px the apps cover with
+ * their own controls; the phone runs on past the bottom edge.
+ */
+function storyHtml(theme) {
+  const p = PALETTE[theme]
+  const c = copy.posts[theme]
   return `
-<body style="background:#efe3c6;color:#3a2414">
-  <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 20% 40%, rgba(255,255,255,0.6), transparent 60%)"></div>
-  <div data-copy class="kicker" style="position:absolute;left:72px;top:150px;font-size:26px;color:#9b2a1c">a gamebook</div>
-  <div data-copy data-fit data-lines="2" data-min="56" style="position:absolute;left:68px;width:520px;top:190px;font-weight:700;font-size:92px;line-height:1">${copy.brand.title}</div>
-  <div data-copy data-fit data-lines="2" data-min="26" style="position:absolute;left:72px;width:500px;top:392px;font-style:italic;font-size:36px;line-height:1.2;opacity:0.85">${copy.brand.tagline}</div>
-  ${fan}
+<body style="background:${p.ground};color:${p.ink}">
+  <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 18%, ${p.dark ? 'rgba(255,255,255,0.09)' : 'rgba(255,255,255,0.6)'}, transparent 62%)"></div>
+  <div style="position:absolute;left:90px;right:90px;top:280px;display:flex;flex-direction:column;align-items:center;gap:26px;text-align:center">
+    <div data-copy class="kicker" style="font-size:34px;color:${p.accent}">${c.kicker}</div>
+    <div data-copy data-fit data-lines="3" data-min="62" style="width:100%;font-weight:700;font-size:92px;line-height:1.04">${c.headline}</div>
+    <div data-copy data-fit data-lines="2" data-min="34" style="width:84%;font-style:italic;font-size:42px;line-height:1.2;opacity:0.85">${c.sub}</div>
+  </div>
+  <div class="phone" data-device style="left:230px;top:800px;width:620px;height:1102px"><img src="${img(`portrait-${c.screen ?? 'page'}-${theme}.png`)}"></div>
 </body>`
 }
 
@@ -275,7 +277,9 @@ async function compose() {
   mkdirSync(posts, { recursive: true })
   for (const theme of THEMES) await render(postHtml(theme), { width: 1080, height: 1350, file: path.join(posts, `post-${theme}.jpg`), name: `post-${theme}` })
   await render(squareHtml(), { width: 1080, height: 1080, file: path.join(posts, 'square-six-books.jpg'), name: 'square' })
-  await render(ogHtml(), { width: 1200, height: 630, file: path.join(STILLS, 'og-card.png'), name: 'og-card' })
+  const stories = path.join(STILLS, 'stories')
+  mkdirSync(stories, { recursive: true })
+  for (const theme of THEMES) await render(storyHtml(theme), { width: 1080, height: 1920, file: path.join(stories, `story-${theme}.jpg`), name: `story-${theme}` })
 }
 
 try {

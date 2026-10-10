@@ -150,13 +150,14 @@ const shorts = [
           await page.getByRole('button', { name: 'Close settings' }).click()
           await page.waitForTimeout(1500)
         },
-        async run({ page, say, tap, wait, mark }) {
+        async run({ page, say, tap, wait, mark, tale }) {
           await wait(0.8)
           await say('picks')
           await wait(0.2)
           // Said before the page turns, so nobody talks over the narrator.
           await say('reads')
-          await tap(page.getByTestId('current-page').locator('.choice').first(), 0.1)
+          // The choice along the tale's path: the page behind it has its reading recorded.
+          await tap(page.getByTestId('current-page').locator(`.choice[data-target="${tale('painter').pages[2]}"]`), 0.1)
           mark('narrator')
           await page.getByTestId('current-page').getByTestId('prose').waitFor({ state: 'attached', timeout: 60_000 })
           await wait(12)
