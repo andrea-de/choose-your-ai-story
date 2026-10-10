@@ -1,0 +1,59 @@
+{
+  "_about": "The tales the promo media show. Each is made through the app's own API (npm run promo:content), then read along `path`: the index of the choice taken on each page. `narrate` lists how many pages along the path are recorded, so the videos never wait on the narrator. Heroes are a role and a trait, settings a place, tones the app's own moods (src/lib/themes.ts).",
+  "tales": [
+    {
+      "key": "lamplighter",
+      "theme": "historic-fantasy",
+      "hero": "a lamplighter who is afraid of the dark",
+      "setting": "a walled city on the longest night of winter",
+      "tone": "spooky and twisty",
+      "path": [0, 1, 0],
+      "narrate": 2
+    },
+    {
+      "key": "engineer",
+      "theme": "future",
+      "hero": "the only engineer awake on a sleeper ship, who talks to the plants",
+      "setting": "the ship's flooded garden deck",
+      "tone": "cosmic and thrilling",
+      "path": [1, 0, 0],
+      "narrate": 2
+    },
+    {
+      "key": "pharmacist",
+      "theme": "noir",
+      "hero": "a night-shift pharmacist who notices everything and says nothing",
+      "setting": "an all-night drugstore on Sunset Boulevard",
+      "tone": "double-crossing",
+      "path": [0, 0, 1],
+      "narrate": 2
+    },
+    {
+      "key": "cartographer",
+      "theme": "pirate",
+      "hero": "a seasick mapmaker pressed into a pirate crew",
+      "setting": "a reef that is on no chart",
+      "tone": "treasure-hunting and funny",
+      "path": [0, 1, 1],
+      "narrate": 1
+    },
+    {
+      "key": "painter",
+      "theme": "dream",
+      "hero": "a child who can step into paintings",
+      "setting": "a museum after closing time",
+      "tone": "whimsical and cozy",
+      "path": [1, 1, 0],
+      "narrate": 2
+    },
+    {
+      "key": "shepherd",
+      "theme": "ancient",
+      "hero": "a shepherd an oracle named a hero by mistake",
+      "setting": "the road to Delphi",
+      "tone": "fated and funny",
+      "path": [0, 0, 0],
+      "narrate": 1
+    }
+  ]
+}

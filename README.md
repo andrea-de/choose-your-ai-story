@@ -72,6 +72,7 @@ For a faster production build: `npm run build && npm start`.
 | `GEMINI_IMAGE_MODEL` | `gemini-3.1-flash-lite-image` | Only used with `SKETCHES=generate`. |
 | `PREFETCH_CHOICES` | `true` | Write the pages behind each choice while the reader is still reading, so turning is instant. `false` halves text cost but makes readers wait. |
 | `STORY_STORE` | `file` | `file` keeps stories in `.data/` across restarts; `memory` forgets them on restart. |
+| `STORY_DATA_DIR` | `.data/` | Where `file` keeps them. The promo harness points it at its own tales. |
 | `NARRATION` | `on` | `off` removes reading aloud: no speaker button, and no page is ever recorded. |
 | `SHOW_COSTS` | `true` | Each story's running cost (writing, narration, sketches) on its cover. `false` hides it from readers; it is still logged on the server and kept with the story. |
 | `GEMINI_SPEECH_MODEL` | `gemini-3.8-flash-tts` | Model that reads pages aloud. `gemini-3.8-flash-lite-tts` is a third cheaper. |
@@ -118,3 +119,7 @@ Stories are kept in memory and written to `.data/`. That suits local play and a 
 ## History
 
 This replaces a 2023 version (Next.js 13, OpenAI, MongoDB) whose commits are kept in this repository's history.
+
+## Promo media
+
+`npm run promo` makes the promotional and social media from the running app: a narrated tour, social shorts, posts, a link card and every screen, with a review gallery that checks each file against where it goes. See [promo/README.md](promo/README.md).
