@@ -40,19 +40,19 @@ const shorts = [
     title: 'Short: my own case file',
     about: 'A reader makes a noir tale starring themself: types who they are and where, opens the case, and turns to the page their first choice names.',
     lines: {
-      want: 'I wanted a detective story, starring me.',
-      where: 'On the night shift, at the drugstore where I work.',
-      wrote: 'It wrote me a whole case file.',
-      choice: 'And every choice sends you to another page.',
+      want: 'I asked for a detective story, starring me.',
+      where: 'The night-shift pharmacist, at the drugstore where I work.',
+      wrote: 'It opened a case file, all about me.',
+      choice: 'And every move from here is mine.',
     },
     beats: [
       {
-        name: 'case',
+        name: 'form',
         start: '/',
         async before({ page }) {
           await toForm(page, 'Noir')
         },
-        async run({ page, say, tap, wait, readAhead }) {
+        async run({ page, say, tap, wait, mark, state }) {
           await wait(0.6)
           const want = say('want', { wait: false })
           await typeInto(page, '#hero', 'a night-shift pharmacist who notices everything')
@@ -61,18 +61,45 @@ const shorts = [
           await typeInto(page, '#setting', 'an all-night drugstore on Sunset')
           await where
           await tap(page.getByRole('button', { name: 'Open the Case' }))
+          mark('opened')
+          // Cut here; the next beat opens on the case file once it is written.
+          await page.waitForURL(/\/s\/[a-z0-9]+$/, { timeout: 120_000 })
+          state.caseFile = page.url().split('/').pop()
+        },
+        endAt: { after: 'opened', plus: 0.9 },
+      },
+      {
+        name: 'cover',
+        start: ({ state }) => `/s/${state.caseFile}`,
+        async before({ page, written, state }) {
+          // Page one is written the first time anyone opens it: before filming, not on camera.
+          await written(state.caseFile, [1])
           await page.locator('[data-leaf=cover] .cover-begin').waitFor({ timeout: 60_000 })
-          await wait(1.0)
+          await page.waitForTimeout(800)
+        },
+        async run({ page, say, tap, wait }) {
+          await wait(0.4)
           await say('wrote')
           await tap(page.locator('[data-leaf=cover] .cover-begin'))
           await page.getByTestId('current-page').getByTestId('prose').waitFor({ state: 'attached', timeout: 60_000 })
-          await wait(2.4)
+          await wait(2.6)
+        },
+      },
+      {
+        name: 'choice',
+        start: ({ state }) => `/s/${state.caseFile}/1`,
+        async before({ page, readAhead, written, state }) {
           await readAhead()
-          await wait(0.6)
+          const targets = await page.getByTestId('current-page').locator('.choice').evaluateAll((els) => els.map((e) => Number(e.dataset.target)))
+          await written(state.caseFile, targets)
+          await page.waitForTimeout(600)
+        },
+        async run({ page, say, tap, wait }) {
+          await wait(0.4)
           await say('choice')
           await tap(page.getByTestId('current-page').locator('.choice').first(), 0.3)
           await page.getByTestId('current-page').getByTestId('prose').waitFor({ state: 'attached', timeout: 60_000 })
-          await wait(2.6)
+          await wait(2.4)
         },
       },
     ],
@@ -83,10 +110,10 @@ const shorts = [
     title: 'Short: a book everyone shares',
     about: 'A reader opens a tale others have read, sees on its map which pages are already written, then takes a choice nobody has taken, and the page is written for them.',
     lines: {
-      shared: 'This book is shared with everyone who reads it.',
-      dots: 'Every filled dot is a page that has already been written.',
-      untaken: 'So I took a choice nobody had taken yet.',
-      kept: 'And now that page is there for the next reader.',
+      shared: 'This book is shared. Everyone who reads it is writing it.',
+      dots: 'Every filled dot is a page that is already written.',
+      untaken: 'So I picked the way nobody had gone.',
+      kept: 'That page exists now because I went there.',
     },
     beats: [
       {

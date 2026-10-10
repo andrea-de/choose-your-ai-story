@@ -15,15 +15,20 @@ const tour = {
   slots: {
     portrait: 'Social video (Reels, Shorts, TikTok), 9:16',
   },
+  // The story it tells: a book that is blank until you turn to the page; worlds
+  // that are each a whole different book; you choose, it writes, it reads to you,
+  // and what you wrote stays for the next reader.
   lines: {
-    hello: 'This is a gamebook that writes itself as you read.',
-    books: 'Pick a kind of book. Each has its own paper, its own voice, and its own way of turning the page.',
-    begin: 'Say who you are and where it begins, or roll the dice.',
-    first: 'Page one is written for you, as you watch.',
-    choice: 'Every choice sends you to a page. If nobody has been there yet, it is written on the spot.',
-    turns: 'And each kind of book turns its pages its own way.',
-    narrator: 'Switch on the narrator, and every page is read aloud.',
-    kept: 'Every page is kept. The next reader can follow your path, or find a new one.',
+    hello: 'Every page in this book is blank, until you turn to it.',
+    books: 'Pick your world. Deep space, noir, pirates, dreams, ancient myth, or old-world fantasy.',
+    begin: 'Tell it who you are, or roll the dice.',
+    first: 'Seconds later, there is your first page.',
+    choice: 'Every choice sends you to a new page. If no one has been there, it is written just for you.',
+    noir: 'In noir, it is a typed case file.',
+    future: 'In deep space, the ship’s own log.',
+    dream: 'In a dream, every page floats under a night sky.',
+    narrator: 'Turn on the narrator, and it reads to you.',
+    kept: 'Every page is kept, so the next reader can follow your path, or write a new one.',
   },
   beats: [
     {
@@ -47,7 +52,8 @@ const tour = {
       async run({ page, say, tap, wait }) {
         const spoken = say('books', { wait: false })
         for (const theme of ['Future', 'Noir', 'Pirate', 'Dreamscape', 'Ancient', 'Historic Fantasy']) {
-          await tap(page.getByRole('radio', { name: new RegExp(theme) }), 0.6)
+          // In step with the line, which names them in this order.
+          await tap(page.getByRole('radio', { name: new RegExp(theme) }), 0.78)
         }
         await spoken
         await wait(0.4)
@@ -63,17 +69,32 @@ const tour = {
         await page.getByRole('heading', { name: 'Begin a new tale' }).waitFor()
         await page.waitForTimeout(1200)
       },
-      async run({ page, say, tap, wait, mark }) {
+      async run({ page, say, tap, wait, mark, state }) {
         const spoken = say('begin', { wait: false })
         await wait(0.6)
         await tap(page.getByRole('button', { name: 'Roll the dice' }), 0.9)
         await tap(page.getByRole('button', { name: 'Roll the dice' }), 0.9)
         await spoken
         await tap(page.getByRole('button', { name: 'Begin', exact: true }))
-        // The tale is begun for real: its cover comes when the storyteller has its title.
+        mark('begun')
+        // The tale is begun for real; the beat is cut just after the tap, and the
+        // next opens on its cover, so nobody watches the storyteller at work.
+        await page.waitForURL(/\/s\/[a-z0-9]+$/, { timeout: 120_000 })
+        state.tourTale = page.url().split('/').pop()
+      },
+      endAt: { after: 'begun', plus: 0.9 },
+    },
+    {
+      name: 'first',
+      start: ({ state }) => `/s/${state.tourTale}`,
+      async before({ page, written, state }) {
+        // Page one is written the first time anyone opens it: before filming, not on camera.
+        await written(state.tourTale, [1])
         await page.locator('[data-leaf=cover] .cover-begin').waitFor({ timeout: 60_000 })
-        mark('cover')
-        await wait(0.9)
+        await page.waitForTimeout(800)
+      },
+      async run({ page, say, tap, wait }) {
+        await wait(0.4)
         const first = say('first', { wait: false })
         await tap(page.locator('[data-leaf=cover] .cover-begin'))
         await page.getByTestId('current-page').getByTestId('prose').waitFor({ state: 'attached', timeout: 60_000 })
@@ -97,30 +118,24 @@ const tour = {
         await wait(0.9)
       },
     },
-    {
-      name: 'turns',
-      start: ({ tale }) => `/s/${tale('pharmacist').id}/${tale('pharmacist').pages[1]}`,
+    // Each world is its own book: the paper, type, sketches and the way its pages turn.
+    ...[
+      ['noir', 'pharmacist'],
+      ['future', 'engineer'],
+      ['dream', 'painter'],
+    ].map(([line, key]) => ({
+      name: `world-${line}`,
+      start: ({ tale }) => `/s/${tale(key).id}/${tale(key).pages[1]}`,
       async before({ readAhead }) {
         await readAhead()
       },
       async run({ page, say, tap, wait }) {
         await wait(0.3)
-        const spoken = say('turns', { wait: false })
-        await wait(0.5)
+        const spoken = say(line, { wait: false })
+        await wait(0.6)
         await tap(page.getByTestId('current-page').locator('.choice').first(), 0.2)
         await spoken
-        await wait(0.6)
-      },
-    },
-    ...['engineer', 'painter'].map((key) => ({
-      name: `turns-${key}`,
-      start: ({ tale }) => `/s/${tale(key).id}/${tale(key).pages[1]}`,
-      async before({ readAhead }) {
-        await readAhead()
-      },
-      async run({ page, tap, wait }) {
-        await wait(0.4)
-        await tap(page.getByTestId('current-page').locator('.choice').first(), 1.9)
+        await wait(0.5)
       },
     })),
     {

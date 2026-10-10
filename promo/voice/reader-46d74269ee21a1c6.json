@@ -1,0 +1,9 @@
+{
+  "engine": "kokoro",
+  "voice": "af_heart",
+  "speed": 1,
+  "text": "The night-shift pharmacist, at the drugstore where I work.",
+  "heard": "the night shift pharmacist at the drug store where I work.",
+  "match": 0.9,
+  "f0": 201.7
+}

@@ -1,9 +1,0 @@
-{
-  "engine": "kokoro",
-  "voice": "am_michael",
-  "speed": 1,
-  "text": "Switch on the narrator, and every page is read aloud.",
-  "heard": "Switch on the narrator and every page is read aloud.",
-  "match": 1,
-  "f0": 116.5
-}

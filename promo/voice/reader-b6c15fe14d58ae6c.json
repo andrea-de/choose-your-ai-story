@@ -1,0 +1,9 @@
+{
+  "engine": "kokoro",
+  "voice": "af_heart",
+  "speed": 1,
+  "text": "That page exists now because I went there.",
+  "heard": "That page exists now because I went there.",
+  "match": 1,
+  "f0": 200
+}

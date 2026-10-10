@@ -1,0 +1,9 @@
+{
+  "engine": "kokoro",
+  "voice": "am_michael",
+  "speed": 1,
+  "text": "Every page in this book is blank, until you turn to it.",
+  "heard": "Every page in this book is blank until you turn to it.",
+  "match": 1,
+  "f0": 121.8
+}

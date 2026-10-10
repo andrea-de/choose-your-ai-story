@@ -1,0 +1,77 @@
+{
+  "provider": "gemini",
+  "tales": {
+    "lamplighter": {
+      "id": "wpm5qqvbiu",
+      "title": "The Lamplighter of Coldbarrow",
+      "theme": "historic-fantasy",
+      "pages": [
+        1,
+        99,
+        31,
+        396
+      ],
+      "narrated": 2
+    },
+    "engineer": {
+      "id": "t9xjfj2wg5",
+      "title": "The Drowned Green",
+      "theme": "future",
+      "pages": [
+        1,
+        305,
+        71,
+        152
+      ],
+      "narrated": 2
+    },
+    "pharmacist": {
+      "id": "mjhkr56yf4",
+      "title": "The Midnight Dose",
+      "theme": "noir",
+      "pages": [
+        1,
+        234,
+        398,
+        333
+      ],
+      "narrated": 2
+    },
+    "cartographer": {
+      "id": "bbgk9wbzfm",
+      "title": "The Shifting Shoal Secret",
+      "theme": "pirate",
+      "pages": [
+        1,
+        363,
+        88,
+        327
+      ],
+      "narrated": 1
+    },
+    "painter": {
+      "id": "kzumtvgyzk",
+      "title": "Behind the Gilded Frames",
+      "theme": "dream",
+      "pages": [
+        1,
+        155,
+        367,
+        35
+      ],
+      "narrated": 3
+    },
+    "shepherd": {
+      "id": "iwr2ah9nyz",
+      "title": "The Accidental Hero of Delphi",
+      "theme": "ancient",
+      "pages": [
+        1,
+        149,
+        247,
+        237
+      ],
+      "narrated": 1
+    }
+  }
+}

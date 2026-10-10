@@ -1,0 +1,9 @@
+{
+  "engine": "kokoro",
+  "voice": "am_michael",
+  "speed": 1,
+  "text": "In deep space, the ship’s own log.",
+  "heard": "In deep space, the ship's own log.",
+  "match": 1,
+  "f0": 111.9
+}

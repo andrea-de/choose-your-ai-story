@@ -1,0 +1,9 @@
+{
+  "engine": "kokoro",
+  "voice": "am_michael",
+  "speed": 1,
+  "text": "Seconds later, there is your first page.",
+  "heard": "Seconds later, there is your first page.",
+  "match": 1,
+  "f0": 122.4
+}

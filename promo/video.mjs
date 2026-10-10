@@ -97,7 +97,7 @@ function endAtPause(file, from, duration) {
   return Math.min(duration, from + Number(m[1]) + 0.25)
 }
 
-async function captureBeat({ production, beat, profileName, takesById, app, index }) {
+async function captureBeat({ production, beat, profileName, takesById, app, index, state }) {
   const dir = path.join(WORK, production.name, profileName)
   mkdirSync(dir, { recursive: true })
   const tale = (key) => {
@@ -109,12 +109,28 @@ async function captureBeat({ production, beat, profileName, takesById, app, inde
   for (let attempt = 1; ; attempt++) {
     const { page, context, profile } = await newPage({ profile: profileName, settings })
     try {
-      const start = typeof beat.start === 'function' ? beat.start({ tale }) : beat.start
+      const start = typeof beat.start === 'function' ? beat.start({ tale, state }) : beat.start
       await page.goto(app.url + start, { waitUntil: 'networkidle' })
       await page.evaluate(() => document.fonts.ready)
       const helpers = {
         page,
         tale,
+        /** Shared by the beats of one production: what one beat began, a later one can open. */
+        state,
+        /** Waits until these pages of a tale are written, so a tap on a choice never waits on the storyteller. */
+        async written(storyId, numbers) {
+          for (const n of numbers) {
+            for (let i = 0; ; i++) {
+              const res = await fetch(`${app.url}/api/stories/${storyId}/pages/${n}?visit=0`)
+              // Each run serves a fresh copy of the tales: one begun in an earlier run is not here.
+              if (res.status === 404) throw new Error(`no tale ${storyId} in this run: retake the beat that begins it too`)
+              const { page: p } = await res.json()
+              if (p?.status === 'ready') break
+              if (i > 90) throw new Error(`page ${n} of ${storyId} was never written`)
+              await new Promise((r) => setTimeout(r, 1000))
+            }
+          }
+        },
         readAhead: () => readAhead(page),
         wait: (s) => page.waitForTimeout(s * 1000),
         async tap(locator, after = 0.6) {
@@ -154,7 +170,9 @@ async function captureBeat({ production, beat, profileName, takesById, app, inde
       await run
       const clip = await rec.stop()
       rmSync(workDir, { recursive: true, force: true })
-      const meta = { beat: beat.name, duration: clip.duration, marks: clip.marks, spoken }
+      const meta = { beat: beat.name, duration: clip.duration, marks: clip.marks, spoken, state: { ...state } }
+      // Cut a moment after a mark: what follows (the storyteller at work) is not worth watching.
+      if (beat.endAt) meta.duration = Math.min(clip.duration, clip.marks[beat.endAt.after] + beat.endAt.plus)
       if (beat.endAtPause) meta.duration = endAtPause(clip.file, clip.marks[beat.endAtPause.after] + beat.endAtPause.min, clip.duration)
       writeFileSync(path.join(dir, `${beat.name}.json`), JSON.stringify(meta, null, 2))
       log(`${production.name}/${profileName}/${beat.name}: ${clip.duration.toFixed(1)} s`)
@@ -365,24 +383,35 @@ try {
     if (!flag('--skip-build')) buildApp()
     app = await startApp({ scratch: true })
   }
+  const used = new Set()
   for (const production of productions) {
     const takesById = await takes(production)
+    for (const t of Object.values(takesById)) used.add(path.basename(t.file, '.wav'))
     for (const profileName of production.profiles.filter((p) => !option('--profile') || p === option('--profile'))) {
       const metas = []
+      const state = {}
       for (const beat of production.beats) {
         const file = path.join(WORK, production.name, profileName, `${beat.name}.json`)
         if (POST || (option('--beat') && option('--beat') !== beat.name)) {
           if (!existsSync(file)) throw new Error(`--post: ${production.name}/${profileName}/${beat.name} was never recorded`)
           const meta = JSON.parse(readFileSync(file, 'utf8'))
+          Object.assign(state, meta.state ?? {})
           // A reworded line keeps its place but takes its new length.
           for (const s of meta.spoken) s.seconds = probeSeconds(takesById[s.id].file)
           metas.push(meta)
         } else {
-          metas.push(await captureBeat({ production, beat, profileName, takesById, app, index }))
+          metas.push(await captureBeat({ production, beat, profileName, takesById, app, index, state }))
         }
       }
       const out = path.join(OUT, 'video', `${production.name}-${profileName}.mp4`)
       results.push(await finish({ production, profileName, metas, takesById, out }))
+    }
+  }
+  // A full run knows every line there is: takes no line uses any more are deleted, so they leave git too.
+  if (!option('--only') && !option('--beat')) {
+    const dir = path.join(PROMO, 'voice')
+    for (const f of readdirSync(dir).filter((f) => /\.(wav|json)$/.test(f) && f !== 'ledger.json')) {
+      if (!used.has(f.replace(/\.(wav|json)$/, ''))) rmSync(path.join(dir, f))
     }
   }
 } finally {

@@ -1,14 +1,14 @@
 {
-  "_about": "Words on the composed stills. `screen` picks the shot in the phone: page (its words and sketch, the default) or choices. Written to the reader, no numbers or prices, nothing the app does not do (the README is the reference). Headlines fit two lines; the build fails if one does not.",
+  "_about": "Words on the composed stills. Written to the reader, no numbers or prices, nothing the app does not do (the README is the reference). Headlines fit two lines; the build fails if one does not.",
   "brand": {
     "title": "Tales Unwritten",
     "tagline": "A gamebook that writes itself as you read.",
     "six": "Six kinds of book. Every page is written the first time someone turns to it, then kept for everyone."
   },
   "posts": {
-    "historic-fantasy": { "kicker": "Historic fantasy", "headline": "Every choice names a page. Some are still unwritten.", "sub": "Turn to one and it is written for you, then kept for the next reader.", "screen": "choices" },
+    "historic-fantasy": { "kicker": "Historic fantasy", "headline": "Every choice names a page. Some are still unwritten.", "sub": "Turn to one and it is written for you, then kept for the next reader." },
     "future": { "kicker": "Future", "headline": "You choose. The ship’s log writes itself.", "sub": "Deep space and cold light, read aloud by the ship’s own archive." },
-    "noir": { "kicker": "Noir", "headline": "You’re the detective. It writes the case.", "sub": "A typed case file that turns like a stack of papers." },
+    "noir": { "kicker": "Noir", "headline": "You make the call. It writes the case.", "sub": "A typed case file that turns like a stack of papers." },
     "pirate": { "kicker": "Pirate", "headline": "Choose the course. It writes the voyage.", "sub": "A captain’s log over a sea chart, spun by an old bosun." },
     "dream": { "kicker": "Dreamscape", "headline": "Pick what happens. It reads it to you.", "sub": "Sheer pages under a twilight sky, and a voice just behind your ear." },
     "ancient": { "kicker": "Ancient myth", "headline": "Sing of a hero. Any hero at all.", "sub": "Papyrus in a Greek key, told by a rhapsode at dusk." }

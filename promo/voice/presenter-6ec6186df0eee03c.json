@@ -1,0 +1,9 @@
+{
+  "engine": "kokoro",
+  "voice": "am_michael",
+  "speed": 1,
+  "text": "Pick your world. Deep space, noir, pirates, dreams, ancient myth, or old-world fantasy.",
+  "heard": "Pick your world, deep space noir pirates dreams ancient myth or old world fantasy.",
+  "match": 1,
+  "f0": 118.2
+}

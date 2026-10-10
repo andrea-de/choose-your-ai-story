@@ -1,0 +1,9 @@
+{
+  "engine": "kokoro",
+  "voice": "am_michael",
+  "speed": 1,
+  "text": "Tell it who you are, or roll the dice.",
+  "heard": "Tell it who you are or roll the dice.",
+  "match": 1,
+  "f0": 119.4
+}

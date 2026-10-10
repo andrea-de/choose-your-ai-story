@@ -1,9 +1,0 @@
-{
-  "engine": "kokoro",
-  "voice": "am_michael",
-  "speed": 1,
-  "text": "Page one is written for you, as you watch.",
-  "heard": "Page 1 is written for you as you watch.",
-  "match": 1,
-  "f0": 119.1
-}

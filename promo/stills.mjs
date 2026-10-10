@@ -223,7 +223,19 @@ async function render(html, { width, height, file, name }) {
 
 const img = (name) => pathToFileURL(path.join(SCREENS, name)).href
 
-/** 1080×1350: the copy above, the book's own page below in a phone, cropped by the edge. */
+/**
+ * Two phones side by side: the page as it reads (words and sketch) on the left,
+ * and the choices it ends on to the right, a little lower, the way the eye
+ * moves from one to the next. Centred on the canvas.
+ */
+function pair(theme, { top, width, gap, drop, canvas = 1080 }) {
+  const height = Math.round((width * 16) / 9)
+  const left = Math.round((canvas - (width * 2 + gap)) / 2)
+  const phone = (shot, x, y) => `<div class="phone" data-device style="left:${x}px;top:${y}px;width:${width}px;height:${height}px"><img src="${img(`portrait-${shot}-${theme}.png`)}"></div>`
+  return phone('page', left, top) + phone('choices', left + width + gap, top + drop)
+}
+
+/** 1080×1350: the copy above, the book's page and its choices below in two phones. */
 function postHtml(theme) {
   const p = PALETTE[theme]
   const c = copy.posts[theme]
@@ -235,7 +247,7 @@ function postHtml(theme) {
   </div>
   <div data-copy data-fit data-lines="2" data-min="54" style="position:absolute;left:84px;right:84px;top:128px;text-align:center;font-weight:700;font-size:78px;line-height:1.04">${c.headline}</div>
   <div data-copy data-fit data-lines="2" data-min="30" style="position:absolute;left:120px;right:120px;top:312px;text-align:center;font-style:italic;font-size:38px;line-height:1.2;opacity:0.85">${c.sub}</div>
-  <div class="phone" data-device style="left:270px;top:452px;width:540px;height:960px"><img src="${img(`portrait-${c.screen ?? 'page'}-${theme}.png`)}"></div>
+  ${pair(theme, { top: 462, width: 430, gap: 28, drop: 64 })}
 </body>`
 }
 
@@ -267,7 +279,7 @@ function storyHtml(theme) {
     <div data-copy data-fit data-lines="3" data-min="62" style="width:100%;font-weight:700;font-size:92px;line-height:1.04">${c.headline}</div>
     <div data-copy data-fit data-lines="2" data-min="34" style="width:84%;font-style:italic;font-size:42px;line-height:1.2;opacity:0.85">${c.sub}</div>
   </div>
-  <div class="phone" data-device style="left:230px;top:800px;width:620px;height:1102px"><img src="${img(`portrait-${c.screen ?? 'page'}-${theme}.png`)}"></div>
+  ${pair(theme, { top: 860, width: 476, gap: 30, drop: 96 })}
 </body>`
 }
 

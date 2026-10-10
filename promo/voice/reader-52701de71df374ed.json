@@ -1,9 +1,0 @@
-{
-  "engine": "kokoro",
-  "voice": "af_heart",
-  "speed": 1,
-  "text": "It wrote me a whole case file.",
-  "heard": "It wrote me a whole case file.",
-  "match": 1,
-  "f0": 215.3
-}

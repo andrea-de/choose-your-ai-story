@@ -1,0 +1,54 @@
+{
+  "provider": "gemini",
+  "total": 0.7584075,
+  "tales": [
+    {
+      "key": "lamplighter",
+      "id": "wpm5qqvbiu",
+      "text": 0.1078695,
+      "speech": 0.023212999999999998,
+      "image": 0,
+      "usd": 0.1310825
+    },
+    {
+      "key": "engineer",
+      "id": "t9xjfj2wg5",
+      "text": 0.103497,
+      "speech": 0.0267715,
+      "image": 0,
+      "usd": 0.1302685
+    },
+    {
+      "key": "pharmacist",
+      "id": "mjhkr56yf4",
+      "text": 0.11434425,
+      "speech": 0.021691000000000002,
+      "image": 0,
+      "usd": 0.13603525
+    },
+    {
+      "key": "cartographer",
+      "id": "bbgk9wbzfm",
+      "text": 0.10783575,
+      "speech": 0.0102455,
+      "image": 0,
+      "usd": 0.11808125
+    },
+    {
+      "key": "painter",
+      "id": "kzumtvgyzk",
+      "text": 0.09722325,
+      "speech": 0.036547500000000004,
+      "image": 0,
+      "usd": 0.13377075
+    },
+    {
+      "key": "shepherd",
+      "id": "iwr2ah9nyz",
+      "text": 0.09784125,
+      "speech": 0.011328,
+      "image": 0,
+      "usd": 0.10916925000000001
+    }
+  ]
+}
