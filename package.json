@@ -12,7 +12,13 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "check": "npm run typecheck && npm run lint && npm test"
+    "check": "npm run typecheck && npm run lint && npm test",
+    "promo": "node promo/content.mjs && node promo/stills.mjs && node promo/video.mjs --skip-build && node promo/gallery.mjs",
+    "promo:content": "node promo/content.mjs",
+    "promo:stills": "node promo/stills.mjs",
+    "promo:video": "node promo/video.mjs",
+    "promo:gallery": "node promo/gallery.mjs",
+    "promo:approve": "node promo/gallery.mjs --approve"
   },
   "dependencies": {
     "@fontsource/cinzel": "^5.3.0",

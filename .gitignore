@@ -11,3 +11,12 @@ next-env.d.ts
 !.env.example
 .DS_Store
 .shots/
+
+# Promo harness: renders, and the mock storyteller's dry-run tales
+promo/out/
+promo/data/mock/
+promo/work/
+# Large and cheap to make again, so never committed: git keeps every version forever.
+promo/voice/
+promo/data/*/narrations/
+promo/gallery/

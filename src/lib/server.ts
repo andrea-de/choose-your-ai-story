@@ -21,7 +21,9 @@ function createTeller(env: NodeJS.ProcessEnv): StoryTeller {
 }
 
 export function createService(env: NodeJS.ProcessEnv = process.env): StoryService {
-  const store = env.STORY_STORE === 'memory' ? new MemoryStore() : new MemoryStore(path.join(process.cwd(), '.data'))
+  // STORY_DATA_DIR: somewhere other than .data/, e.g. the promo harness's own tales.
+  const dir = path.resolve(env.STORY_DATA_DIR ?? path.join(process.cwd(), '.data'))
+  const store = env.STORY_STORE === 'memory' ? new MemoryStore() : new MemoryStore(dir)
   const teller = createTeller(env)
   // Narration costs money with a real model, but nothing with the mock; either way it runs only for listeners.
   const narration = (env.NARRATION ?? 'on') !== 'off'
